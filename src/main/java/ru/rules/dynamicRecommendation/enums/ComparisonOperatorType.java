@@ -1,4 +1,4 @@
-package enums;
+package ru.rules.dynamicRecommendation.enums;
 
 /**
  * Defines the types of comparison operations that can be used to evaluate

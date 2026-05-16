@@ -1,4 +1,4 @@
-package enums;
+package ru.rules.dynamicRecommendation.enums;
 /**
  * Defines the types of queries supported by the system for user and transaction analysis.
  * Used to categorize different data retrieval and comparison operations.

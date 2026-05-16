@@ -1,4 +1,4 @@
-package enums;
+package ru.rules.dynamicRecommendation.enums;
 
 /**
  * Defines the types of financial transactions that can be performed on an account.
