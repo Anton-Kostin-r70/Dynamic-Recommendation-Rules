@@ -1,4 +1,5 @@
 package ru.rules.dynamicRecommendation.enums;
+
 /**
  * Defines the types of queries supported by the system for user and transaction analysis.
  * Used to categorize different data retrieval and comparison operations.
@@ -25,7 +26,7 @@ public enum QueryType {
      *   <li>{@code false} — if no association exists or the user is inactive for this product</li>
      * </ul>
      */
-    USER_OF,
+    USER_OF("USER_OF"),
     /**
      * Determines whether the target user (for whom recommendations are being generated)
      * is an active user of a specific product.
@@ -54,7 +55,7 @@ public enum QueryType {
      *   </li>
      * </ul>
      */
-    ACTIVE_USER_OF,
+    ACTIVE_USER_OF("ACTIVE_USER_OF"),
     /**
      * Compares the aggregated transaction sum against a threshold value with flexible criteria.
      * Used to implement financial rules, eligibility checks, and behavioral analysis.
@@ -89,7 +90,7 @@ public enum QueryType {
      *   <li>{@code false} — if no association exists or the user is inactive for this product</li>
      * </ul>
      */
-    TRANSACTION_SUM_COMPARE,
+    TRANSACTION_SUM_COMPARE("TRANSACTION_SUM_COMPARE"),
     /**
      * Compares deposit and withdrawal transaction sums for a specific product category.
      * Used to analyze user financial behavior, liquidity patterns, and product usage intensity.
@@ -112,5 +113,15 @@ public enum QueryType {
      *   <li>boolean result of the comparison between deposit and withdrawal sums</li>
      * </ul>
      */
-    TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW
+    TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW("TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW");
+
+    private final String type;
+
+    QueryType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
 }

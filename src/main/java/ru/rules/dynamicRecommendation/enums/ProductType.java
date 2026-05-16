@@ -1,4 +1,5 @@
 package ru.rules.dynamicRecommendation.enums;
+
 /**
  * Defines the main types of financial products provided by banks and financial institutions.
  * This enum is used to categorize products based on their primary purpose and functionality.
