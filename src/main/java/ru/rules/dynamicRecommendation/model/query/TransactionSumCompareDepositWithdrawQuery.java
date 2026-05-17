@@ -4,7 +4,7 @@ import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.QueryType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
-import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.model.User;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public class TransactionSumCompareDepositWithdrawQuery extends Query {
      * @throws RuntimeException         if database access fails during sum calculations
      */
     @Override
-    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
+    public boolean evaluate(User user, TransactionRepository transactionRepository) {
         // Validate input parameters
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");

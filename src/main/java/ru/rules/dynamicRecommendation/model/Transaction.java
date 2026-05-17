@@ -1,7 +1,6 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
-import org.springframework.data.annotation.Id;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
 
@@ -91,11 +90,18 @@ public class Transaction {
      */
     public Transaction(Long userId, ProductType productType,
                        TransactionType transactionType, BigDecimal amount) {
+        if (amount == null) {
+            throw new IllegalArgumentException("Transaction amount cannot be null");
+        }
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Transaction amount cannot be negative");
+        }
+
         this.userId = userId;
         this.productType = productType;
         this.transactionType = transactionType;
-        // TODO проверка на отрицание
         this.amount = amount;
+        this.createdAt = LocalDateTime.now(); // Автоматически устанавливаем текущую дату
     }
 
     public Long getId() {

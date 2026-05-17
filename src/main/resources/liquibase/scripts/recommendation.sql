@@ -30,12 +30,12 @@ CREATE TABLE IF NOT EXISTS query_argument (
 CREATE INDEX idx_query_argument_id ON query_argument(query_id);
 
 -- changeset author usr-1:4
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS user (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL
 );
 
-CREATE INDEX idx_users_name ON users(name);
+CREATE INDEX idx_user_name ON user(name);
 
 -- changeset author usr-1:5
 CREATE TABLE IF NOT EXISTS transactions (
@@ -56,4 +56,4 @@ CREATE INDEX idx_transactions_created_at ON transactions(created_at);
 -- changeset author usr-1:6
 ALTER TABLE transactions
 ADD CONSTRAINT fk_transactions_user
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT;
+FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT;

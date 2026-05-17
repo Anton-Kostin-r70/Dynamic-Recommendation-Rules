@@ -2,6 +2,7 @@ package ru.rules.dynamicRecommendation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.rules.dynamicRecommendation.model.RuleEntity;
+
 import java.util.UUID;
 
 /**
@@ -16,10 +17,12 @@ public interface RuleRepository extends JpaRepository<RuleEntity, UUID> {
      *
      * @param id the UUID identifier of the rule to be deleted; must not be null
      * @throws IllegalArgumentException if the provided id is null
-     * Example usage:
-     * <pre>
-     * {@code ruleRepository.deleteById(ruleId);}
-     * </pre>
+     *                                  Example usage:
+     *                                  <pre>
+     *                                  {@code ruleRepository.deleteById(ruleId);}
+     *                                  </pre>
      */
     void deleteById(UUID id);
+
+    boolean existsByProductId(UUID productId);
 }

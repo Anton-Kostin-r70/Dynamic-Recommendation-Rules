@@ -8,8 +8,8 @@ import jakarta.persistence.*;
  * Corresponds to the "users" table in the database.
  */
 @Entity
-@Table(name = "users")
-public class Users {
+@Table(name = "user")
+public class User {
 
     /**
      * Unique identifier of the user.
@@ -31,7 +31,7 @@ public class Users {
      * Default constructor required by JPA.
      * Should not be used for creating new user instances — use the parameterized constructor instead.
      */
-    public Users() {
+    public User() {
     }
 
     /**
@@ -42,7 +42,7 @@ public class Users {
      * @param name the user's name; must not be null (enforced by the @Column constraint)
      * @throws IllegalArgumentException if name is null
      */
-    public Users(Long id, String name) {
+    public User(Long id, String name) {
         if (name == null) {
             throw new IllegalArgumentException("User name cannot be null");
         }

@@ -1,6 +1,7 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,7 @@ public class RuleEntity {
      * Unique identifier of the rule.
      * Automatically generated using UUID when a new rule is persisted.
      */
+    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -29,6 +31,7 @@ public class RuleEntity {
      * Used to link the rule to a specific product in the system.
      * Corresponds to the "product_id" column in the database (cannot be null).
      */
+    @Setter
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
@@ -75,16 +78,8 @@ public class RuleEntity {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public UUID getProductId() {
         return productId;
-    }
-
-    public void setProductId(UUID productId) {
-        this.productId = productId;
     }
 
     public String getProductName() {
@@ -105,6 +100,10 @@ public class RuleEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
     public List<QueryEntity> getQueries() {
