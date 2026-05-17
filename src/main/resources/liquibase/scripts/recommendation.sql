@@ -28,3 +28,32 @@ CREATE TABLE IF NOT EXISTS query_argument (
 );
 
 CREATE INDEX idx_query_argument_id ON query_argument(query_id);
+
+-- changeset author usr-1:4
+CREATE TABLE IF NOT EXISTS user (
+    id BIGSERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE INDEX idx_user_name ON user(name);
+
+-- changeset author usr-1:5
+CREATE TABLE IF NOT EXISTS transactions (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    product_type VARCHAR(50) NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(19, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX idx_transactions_product_type ON transactions(product_type);
+CREATE INDEX idx_transactions_transaction_type ON transactions(transaction_type);
+CREATE INDEX idx_transactions_user_product ON transactions(user_id, product_type);
+CREATE INDEX idx_transactions_created_at ON transactions(created_at);
+
+-- changeset author usr-1:6
+ALTER TABLE transactions
+ADD CONSTRAINT fk_transactions_user
+FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE RESTRICT;
