@@ -1,4 +1,4 @@
-package ru.rules.dynamicRecommendation.repository;
+package ru.rules.dynamicRecommendation.repository.secondary;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.rules.dynamicRecommendation.model.RuleEntity;

@@ -13,5 +13,4 @@ public class DynamicRecommendationApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DynamicRecommendationApplication.class, args);
 	}
-
 }

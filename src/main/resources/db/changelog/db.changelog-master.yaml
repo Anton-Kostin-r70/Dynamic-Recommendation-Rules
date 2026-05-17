@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <changeSet id="01create-rul" author="usr-1">
+        <sql>
+            CREATE TABLE IF NOT EXISTS rule (
+            id UUID PRIMARY KEY,
+            product_id UUID NOT NULL,
+            product_name VARCHAR(255) NOT NULL,
+            product_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        </sql>
+        <sql>
+            CREATE INDEX idx_rule_product_id ON rule (product_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="02create-query" author="usr-1">
+        <sql>
+            CREATE TABLE IF NOT EXISTS query (
+            id UUID PRIMARY KEY,
+            rule_id UUID NOT NULL REFERENCES rule(id) ON DELETE CASCADE,
+            query_type VARCHAR(255) NOT NULL,
+            negate BOOLEAN NOT NULL
+            );
+        </sql>
+        <sql>
+            CREATE INDEX idx_query_rule_id ON query (rule_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="03create-query_argument" author="usr-1">
+        <sql>
+            CREATE TABLE IF NOT EXISTS query_argument (
+            query_id UUID NOT NULL REFERENCES query(id) ON DELETE CASCADE,
+            argument VARCHAR(255) NOT NULL
+            );
+        </sql>
+        <sql>
+            CREATE INDEX idx_query_argument_id ON query_argument(query_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="04create-users" author="usr-1">
+        <sql>
+            CREATE TABLE IF NOT EXISTS users (
+            id BIGSERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL
+            );
+        </sql>
+        <sql>
+            CREATE INDEX idx_user_name ON users(name);
+        </sql>
+    </changeSet>
+
+    <changeSet id="05create-transactions" author="usr-1">
+        <sql>
+            CREATE TABLE IF NOT EXISTS transactions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            product_type VARCHAR(50) NOT NULL,
+            transaction_type VARCHAR(50) NOT NULL,
+            amount DECIMAL(19, 2) NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            );
+        </sql>
+        <sql>
+            CREATE INDEX idx_transactions_user_id ON transactions(user_id);
+        </sql>
+        <sql>
+            CREATE INDEX idx_transactions_product_type ON transactions(product_type);
+        </sql>
+        <sql>
+            CREATE INDEX idx_transactions_transaction_type ON transactions(transaction_type);
+        </sql>
+        <sql>
+            CREATE INDEX idx_transactions_user_product ON transactions(user_id, product_type);
+        </sql>
+        <sql>
+            CREATE INDEX idx_transactions_created_at ON transactions(created_at);
+        </sql>
+    </changeSet>
+
+    <changeSet id="06create-transactions" author="usr-1">
+        <sql>
+            ALTER TABLE transactions
+            ADD CONSTRAINT fk_transactions_user
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

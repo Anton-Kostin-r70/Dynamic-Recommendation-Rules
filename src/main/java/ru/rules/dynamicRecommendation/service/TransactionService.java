@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
 import ru.rules.dynamicRecommendation.model.Transaction;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
+import ru.rules.dynamicRecommendation.repository.secondary.TransactionRepository;
 
 import java.math.BigDecimal;
 import java.util.List;

@@ -7,7 +7,7 @@ import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.dto.RuleDTO;
 import ru.rules.dynamicRecommendation.model.QueryEntity;
 import ru.rules.dynamicRecommendation.model.RuleEntity;
-import ru.rules.dynamicRecommendation.repository.RuleRepository;
+import ru.rules.dynamicRecommendation.repository.secondary.RuleRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -169,19 +169,19 @@ public class RuleService {
     private RuleEntity mapToRule(RuleDTO dto) {
         if (dto == null) return null;
 
-        RuleEntity entity = new RuleEntity();
-        entity.setId(dto.getId());
-        entity.setProductName(dto.getProductName());
-        entity.setProductId(dto.getProductId());
-        entity.setProductText(dto.getProductText());
-        entity.setCreatedAt(LocalDateTime.now());
+        RuleEntity rule = new RuleEntity();
+        rule.setId(dto.getId());
+        rule.setProductName(dto.getProductName());
+        rule.setProductId(dto.getProductId());
+        rule.setProductText(dto.getProductText());
+        rule.setCreatedAt(LocalDateTime.now());
 
         if (dto.getQueriesDTO() != null) {
-            entity.setQueries(dto.getQueriesDTO().stream()
+            rule.setQueries(dto.getQueriesDTO().stream()
                     .map(this::dtoToQuery)
                     .collect(Collectors.toList()));
         }
-        return entity;
+        return rule;
     }
 
     /**

@@ -1,8 +1,8 @@
 package ru.rules.dynamicRecommendation.model.query;
 
 import ru.rules.dynamicRecommendation.enums.QueryType;
-import ru.rules.dynamicRecommendation.model.User;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
+import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.repository.secondary.TransactionRepository;
 
 import java.util.List;
 
@@ -83,5 +83,5 @@ public abstract class Query {
      * @throws IllegalArgumentException if user or transactionRepository is null
      * @throws RuntimeException         if evaluation fails due to data issues
      */
-    public abstract boolean evaluate(User user, TransactionRepository transactionRepository);
+    public abstract boolean evaluate(Users user, TransactionRepository transactionRepository);
 }
