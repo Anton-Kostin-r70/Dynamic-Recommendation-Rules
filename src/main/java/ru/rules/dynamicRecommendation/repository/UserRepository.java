@@ -1,7 +1,7 @@
 package ru.rules.dynamicRecommendation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.rules.dynamicRecommendation.model.User;
+import ru.rules.dynamicRecommendation.model.Users;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +13,7 @@ import java.util.Optional;
  * The repository automatically scans the package and subpackages for entity classes
  * and generates implementation for declared methods based on naming conventions.
  */
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<Users, Long> {
 
     /**
      * Checks whether a user with the specified ID exists in the database.
@@ -31,7 +31,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Optional containing the User if found, empty Optional otherwise
      * @throws IllegalArgumentException if the id is null
      */
-    Optional<User> findById(Long id);
+    Optional<Users> findById(Long id);
 
     /**
      * Finds a user by their name (case‑insensitive search).
@@ -40,7 +40,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Optional containing the User if a matching record is found, empty Optional otherwise
      * @throws IllegalArgumentException if the name is null or blank
      */
-    Optional<User> findByNameIgnoreCase(String name);
+    Optional<Users> findByNameIgnoreCase(String name);
 
     /**
      * Retrieves all users whose names contain the specified substring (case‑insensitive).
@@ -50,7 +50,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return list of matching User entities; never null (empty list if no matches)
      * @throws IllegalArgumentException if the substring is null or blank
      */
-    List<User> findByNameContainingIgnoreCase(String nameSubstring);
+    List<Users> findByNameContainingIgnoreCase(String nameSubstring);
 
     /**
      * Counts the total number of users in the system.

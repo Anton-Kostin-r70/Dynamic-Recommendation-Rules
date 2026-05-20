@@ -2,7 +2,7 @@ package ru.rules.dynamicRecommendation.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.rules.dynamicRecommendation.model.User;
+import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.UserRepository;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class UserService {
      * @return Optional containing the user if found
      */
     @Transactional(readOnly = true)
-    public Optional<User> getUserById(Long id) {
+    public Optional<Users> getUserById(Long id) {
         if (id == null || id < 0) {
             throw new IllegalArgumentException("User ID cannot be null or negative");
         }
@@ -43,7 +43,7 @@ public class UserService {
      * @throws IllegalArgumentException if user is null
      */
     @Transactional
-    public User createUser(User user) {
+    public Users createUser(Users user) {
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null");
         }
@@ -59,7 +59,7 @@ public class UserService {
      * @throws IllegalArgumentException if ID is invalid or user not found
      */
     @Transactional
-    public User updateUser(Long id, User userDetails) {
+    public Users updateUser(Long id, Users userDetails) {
         if (id == null || id < 0) {
             throw new IllegalArgumentException("User ID cannot be null or negative");
         }
@@ -67,7 +67,7 @@ public class UserService {
             throw new IllegalArgumentException("User details cannot be null");
         }
 
-        User existingUser = userRepository.findById(id)
+        Users existingUser = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + id));
 
         existingUser.setName(userDetails.getName());
@@ -97,7 +97,7 @@ public class UserService {
      * @return list of all users
      */
     @Transactional(readOnly = true)
-    public List<User> getAllUsers() {
+    public List<Users> getAllUsers() {
         return userRepository.findAll();
     }
 }

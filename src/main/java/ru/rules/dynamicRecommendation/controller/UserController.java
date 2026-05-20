@@ -2,7 +2,7 @@ package ru.rules.dynamicRecommendation.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.rules.dynamicRecommendation.model.User;
+import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.service.UserService;
 
 import java.util.List;
@@ -29,8 +29,8 @@ public class UserController {
      * @return ResponseEntity with user data or 404 if not found
      */
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        Optional<User> user = userService.getUserById(id);
+    public ResponseEntity<Users> getUser(@PathVariable Long id) {
+        Optional<Users> user = userService.getUserById(id);
         return user.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -42,8 +42,8 @@ public class UserController {
      * @return ResponseEntity with created user and 201 status
      */
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
+    public ResponseEntity<Users> createUser(@RequestBody Users user) {
+        Users createdUser = userService.createUser(user);
         return ResponseEntity.status(201).body(createdUser);
     }
 
@@ -55,9 +55,9 @@ public class UserController {
      * @return ResponseEntity with updated user
      */
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<Users> updateUser(@PathVariable Long id, @RequestBody Users user) {
         try {
-            User updatedUser = userService.updateUser(id, user);
+            Users updatedUser = userService.updateUser(id, user);
             return ResponseEntity.ok(updatedUser);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(null);
@@ -86,8 +86,8 @@ public class UserController {
      * @return ResponseEntity with list of all users
      */
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
+    public ResponseEntity<List<Users>> getAllUsers() {
+        List<Users> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
     }
 }
