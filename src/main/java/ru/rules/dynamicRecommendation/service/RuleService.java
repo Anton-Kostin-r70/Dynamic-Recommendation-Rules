@@ -84,13 +84,13 @@ public class RuleService {
      * which are mapped to QueryDTO objects as part of the transformation process.
      * @implSpec The method uses Java 8 Stream API for efficient transformation:
      * {@code ruleRepository.findAll().stream().map(this::mapToDto).collect(Collectors.toList())}
-     * @see #mapToDto(RuleEntity) for the mapping logic between entity and DTO
+     * @see #toDTO(RuleEntity) for the mapping logic between entity and DTO
      */
     @Transactional(readOnly = true)
     public List<RuleDTO> getAllRules() {
         return ruleRepository.findAll()
                 .stream()
-                .map(this::mapToDto)
+                .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -154,9 +154,9 @@ public class RuleService {
         if (dto == null) {
             throw new IllegalArgumentException("DTO cannot be null");
         }
-        RuleEntity rule = mapToRule(dto);
+        RuleEntity rule = toEntity(dto);
         rule.setId(null);
-        return mapToDto(ruleRepository.save(rule));
+        return toDTO(ruleRepository.save(rule));
     }
 
     /**
@@ -166,7 +166,7 @@ public class RuleService {
      * @param dto the DTO to convert; may be null
      * @return corresponding RuleEntity, or null if input is null
      */
-    private RuleEntity mapToRule(RuleDTO dto) {
+    private RuleEntity toEntity(RuleDTO dto) {
         if (dto == null) return null;
 
         RuleEntity entity = new RuleEntity();
@@ -178,7 +178,7 @@ public class RuleService {
 
         if (dto.getQueriesDTO() != null) {
             entity.setQueries(dto.getQueriesDTO().stream()
-                    .map(this::dtoToQuery)
+                    .map(this::toEntity)
                     .collect(Collectors.toList()));
         }
         return entity;
@@ -191,7 +191,7 @@ public class RuleService {
      * @param rule the entity to convert; may be null
      * @return corresponding RuleDTO, or null if input is null
      */
-    private RuleDTO mapToDto(RuleEntity rule) {
+    private RuleDTO toDTO(RuleEntity rule) {
         if (rule == null) {
             return null;
         }
@@ -203,7 +203,7 @@ public class RuleService {
 
         if (rule.getQueries() != null) {
             dto.setQueriesDTO(rule.getQueries().stream()
-                    .map(this::queryToDTO)
+                    .map(this::toDTO)
                     .collect(Collectors.toList()));
         }
         return dto;
@@ -215,7 +215,7 @@ public class RuleService {
      * @param dto the QueryDTO to convert; must not be null
      * @return corresponding QueryEntity
      */
-    private QueryEntity dtoToQuery(QueryDTO dto) {
+    private QueryEntity toEntity(QueryDTO dto) {
         QueryEntity query = new QueryEntity();
         query.setQueryType(dto.getQuery());
         query.setArguments(dto.getArguments());
@@ -229,7 +229,7 @@ public class RuleService {
      * @param query the QueryEntity to convert; must not be null
      * @return corresponding QueryDTO
      */
-    private QueryDTO queryToDTO(QueryEntity query) {
+    private QueryDTO toDTO(QueryEntity query) {
         QueryDTO dto = new QueryDTO();
         dto.setQuery(query.getQueryType());
         dto.setArguments(query.getArguments());
@@ -260,9 +260,9 @@ public class RuleService {
             throw new EntityNotFoundException("Rule not found with ID: " + dto.getId());
         }
 
-        RuleEntity rule = mapToRule(dto);
+        RuleEntity rule = toEntity(dto);
         RuleEntity updatedRule = ruleRepository.save(rule);
-        return mapToDto(updatedRule);
+        return toDTO(updatedRule);
     }
 
     /**
@@ -278,7 +278,7 @@ public class RuleService {
             throw new IllegalArgumentException("Rule ID cannot be null");
         }
         return getRuleById(id)
-                .map(this::mapToDto);
+                .map(this::toDTO);
     }
 
     /**

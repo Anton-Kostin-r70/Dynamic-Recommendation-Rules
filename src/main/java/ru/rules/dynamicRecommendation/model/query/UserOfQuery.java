@@ -2,7 +2,7 @@ package ru.rules.dynamicRecommendation.model.query;
 
 
 import ru.rules.dynamicRecommendation.enums.*;
-import ru.rules.dynamicRecommendation.model.User;
+import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
@@ -53,7 +53,7 @@ public class UserOfQuery extends Query {
      *                                  - the product type argument is invalid (cannot be parsed to ProductType)
      */
     @Override
-    public boolean evaluate(User client, TransactionRepository transactionRepository) {
+    public boolean evaluate(Users client, TransactionRepository transactionRepository) {
         // Validate input parameters
         if (client == null) {
             throw new IllegalArgumentException("User cannot be null");
