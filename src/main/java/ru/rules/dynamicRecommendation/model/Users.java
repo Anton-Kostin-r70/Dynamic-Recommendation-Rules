@@ -1,12 +1,14 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 /**
  * Entity representing a user in the dynamic recommendation system.
  * Stores basic user information used for recommendation logic and transaction tracking.
  * Corresponds to the "users" table in the database.
  */
+@Getter
 @Entity
 @Table(name = "users")
 public class Users {
@@ -50,16 +52,8 @@ public class Users {
         this.name = name;
     }
 
-    public Long getId() {
-        return id;
-    }
-
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getName() {
-        return name;
     }
 
     /**

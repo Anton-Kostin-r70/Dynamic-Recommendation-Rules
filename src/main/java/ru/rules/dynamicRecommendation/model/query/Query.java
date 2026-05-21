@@ -1,5 +1,6 @@
 package ru.rules.dynamicRecommendation.model.query;
 
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.QueryType;
 import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
@@ -46,42 +47,88 @@ public abstract class Query {
     protected boolean negate;
 
     /**
-     * Constructor to initialize a query with its type, arguments, and negation setting.
+     * Constructor to initialize a query from a QueryDTO object, extracting the query type,
+     * arguments, and negation setting.
      *
-     * @param queryType the type of query that defines its evaluation logic;
-     *                  must not be null
-     * @param arguments list of string parameters required for the query execution;
-     *                  may be empty but not null
-     * @param negate    flag indicating whether to invert the evaluation result;
-     *                  false by default (don't negate)
-     * @throws IllegalArgumentException if queryType is null
+     * @param queryDTO data transfer object containing query configuration; must not be null.
+     *                 The DTO should provide:
+     *                 <ul>
+     *                 <li>{@code query} — query type identifier that will be converted to {@link QueryType}</li>
+     *                 <li>{@code arguments} — list of string parameters for query execution</li>
+     *                 <li>{@code negate} — flag indicating whether to invert the evaluation result</li>
+     *                 </ul>
+     * @throws IllegalArgumentException if:
+     *                                  <ul>
+     *                                  <li>{@code queryDTO} is null</li>
+     *                                  <li>the query type extracted from {@code queryDTO.getQuery()} is invalid or cannot be converted
+     *                                      to a {@link QueryType} enum value</li>
+     *                                  <li>the arguments list ({@code queryDTO.getArguments()}) is null</li>
+     *                                  </ul>
      */
-    public Query(QueryType queryType, List<String> arguments, boolean negate) {
+    public Query(QueryDTO queryDTO) {
+        if (queryDTO == null) {
+            throw new IllegalArgumentException("Query DTO cannot be null");
+        }
+        QueryType queryType = QueryType.valueOf(queryDTO.getQuery());
         if (queryType == null) {
             throw new IllegalArgumentException("Query type cannot be null");
         }
+        List<String> arguments = queryDTO.getArguments();
         if (arguments == null) {
             throw new IllegalArgumentException("Arguments list cannot be null");
         }
 
         this.queryType = queryType;
         this.arguments = arguments;
-        this.negate = negate;
+        this.negate = queryDTO.isNegate();
     }
 
     /**
      * Evaluates the query condition for a specific user using transaction data.
      * The actual evaluation logic is implemented by concrete subclasses.
      *
-     * @param user                  the user for whom the recommendation is being evaluated;
-     *                              must not be null
-     * @param transactionRepository repository for accessing transaction data;
-     *                              must not be null
+     * @param user                  the user for whom the recommendation is being evaluated; must not be null
+     * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the condition check:
-     * - true: condition is met (or not met if negate is true)
-     * - false: condition is not met (or met if negate is true when negate is applied)
-     * @throws IllegalArgumentException if user or transactionRepository is null
-     * @throws RuntimeException         if evaluation fails due to data issues
+     * <ul>
+     * <li><b>true</b>: condition is met (or not met if {@code negate} is {@code true})</li>
+     * <li><b>false</b>: condition is not met (or met if {@code negate} is {@code true} and applied)</li>
+     * </ul>
+     * @throws IllegalArgumentException if {@code user} or {@code transactionRepository} is null
+     * @throws RuntimeException         if evaluation fails due to data issues or internal errors
      */
     public abstract boolean evaluate(Users user, TransactionRepository transactionRepository);
+
+    /**
+     * Validates that the number of provided arguments matches the expected count for the query type.
+     * Performed during query initialization to ensure correct configuration before evaluation.
+     *
+     * @param expectedCount the expected number of arguments required for this query type;
+     *                      must be non‑negative
+     * @param queryType     the type of query being validated; used for error message context;
+     *                      must not be null
+     * @throws IllegalArgumentException if:
+     *                                  <ul>
+     *                                  <li>the actual number of arguments ({@code arguments.size()}) does not match {@code expectedCount}</li>
+     *                                  <li>{@code expectedCount} is negative</li>
+     *                                  <li>{@code queryType} is null</li>
+     *                                  </ul>
+     */
+    protected void validateArguments(int expectedCount, QueryType queryType) {
+        if (queryType == null) {
+            throw new IllegalArgumentException("Query type cannot be null");
+        }
+
+        if (expectedCount < 0) {
+            throw new IllegalArgumentException("Expected argument count cannot be negative");
+        }
+
+        int actualCount = arguments.size();
+        if (actualCount != expectedCount) {
+            throw new IllegalArgumentException(
+                    "Invalid number of arguments for " + queryType.getType() +
+                            ": expected " + expectedCount + ", but got " + actualCount
+            );
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 import java.util.UUID;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
  * <p>
  * Corresponds to the "query" table in the database.
  */
+@Getter
 @Entity
 @Table(name = "query")
 public class QueryEntity {
@@ -59,32 +61,16 @@ public class QueryEntity {
     @Column(name = "argument")
     private List<String> arguments;
 
-    public UUID getId() {
-        return id;
-    }
-
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public String getQueryType() {
-        return queryType;
     }
 
     public void setQueryType(String queryType) {
         this.queryType = queryType;
     }
 
-    public boolean isNegate() {
-        return negate;
-    }
-
     public void setNegate(boolean negate) {
         this.negate = negate;
-    }
-
-    public List<String> getArguments() {
-        return arguments;
     }
 
     public void setArguments(List<String> arguments) {

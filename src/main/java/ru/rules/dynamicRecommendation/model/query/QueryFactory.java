@@ -1,8 +1,8 @@
 package ru.rules.dynamicRecommendation.model.query;
 
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.QueryType;
-
-import java.util.List;
+import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 
 /**
  * Factory class for creating query instances based on the specified query type.
@@ -15,24 +15,40 @@ import java.util.List;
 public class QueryFactory {
 
     /**
-     * Creates a query instance of the appropriate type based on the provided parameters.
+     * Creates a query instance of the appropriate type based on the provided QueryDTO and repository.
+     * Delegates to concrete query constructors, passing the DTO and knowledge repository for business logic.
      *
-     * @param queryType the type of query to create (determines the concrete implementation)
-     * @param arguments list of string arguments required for query execution;
-     *                  the structure and meaning of arguments depend on the query type
-     * @param negate    flag indicating whether to negate the query result
-     *                  (true = invert the result, false = use original result)
-     * @return a Query instance of the corresponding type configured with the provided parameters
-     * @throws IllegalArgumentException if the specified queryType is not supported
-     *                                  (i.e., not handled in the switch statement)
+     * @param queryDTO data transfer object containing query configuration; must not be null.
+     *               The DTO should provide:
+     *               <ul>
+     *               <li>{@code query} — query type identifier (e.g., "USER_OF", "ACTIVE_USER_OF")
+     *                   that determines the concrete query implementation</li>
+     *               <li>{@code arguments} — list of string parameters required for query execution</li>
+     *               <li>{@code negate} — flag indicating whether to negate the query result</li>
+     *               </ul>
+     * @param knowledgeRepository repository providing business logic for various query evaluations;
+     *                        must not be null. This repository will be passed to the created query instance
+     *                        for use in its {@code evaluate} method.
+     * @return a {@code Query} instance of the corresponding type (e.g., {@code UserOfQuery},
+     *         {@code ActiveUserOfQuery}), configured with the provided parameters and repository.
+     *         The returned query is ready for evaluation via {@link Query#evaluate}.
+     * @throws IllegalArgumentException if:
+     *        <ul>
+     *        <li>{@code queryDTO} is null</li>
+     *        <li>the query type extracted from {@code queryDTO.getQuery()} is invalid or cannot be converted
+     *            to a {@link QueryType} enum value</li>
+     *        <li>the specified {@code queryType} is not supported (no matching case in the switch statement)</li>
+     *        </ul>
+     * @throws NullPointerException if {@code knowledgeRepository} is null
      */
-    public static Query createQuery(QueryType queryType, List<String> arguments, boolean negate) {
+    public static Query createQuery(QueryDTO queryDTO, KnowledgeRepository knowledgeRepository) {
+        QueryType queryType = QueryType.valueOf(queryDTO.getQuery());
         return switch (queryType) {
-            case USER_OF -> new UserOfQuery(arguments, negate);
-            case ACTIVE_USER_OF -> new ActiveUserOfQuery(arguments, negate);
-            case TRANSACTION_SUM_COMPARE -> new TransactionSumCompareQuery(arguments, negate);
+            case USER_OF -> new UserOfQuery(queryDTO, knowledgeRepository);
+            case ACTIVE_USER_OF -> new ActiveUserOfQuery(queryDTO, knowledgeRepository);
+            case TRANSACTION_SUM_COMPARE -> new TransactionSumCompareQuery(queryDTO, knowledgeRepository);
             case TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW ->
-                    new TransactionSumCompareDepositWithdrawQuery(arguments, negate);
+                    new TransactionSumCompareDepositWithdrawQuery(queryDTO, knowledgeRepository);
             default -> throw new IllegalArgumentException("Unknown query type: " + queryType);
         };
     }

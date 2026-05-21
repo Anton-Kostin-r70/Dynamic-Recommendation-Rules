@@ -1,6 +1,7 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * that define the conditions for recommending this product to users.
  * Corresponds to the "rule" table in the database.
  */
+@Getter
 @Entity
 @Table(name = "rule")
 public class RuleEntity {
@@ -74,40 +76,16 @@ public class RuleEntity {
     @JoinColumn(name = "rule_id")
     private List<QueryEntity> queries;
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getProductId() {
-        return productId;
-    }
-
-    public String getProductName() {
-        return productName;
-    }
-
     public void setProductName(String productName) {
         this.productName = productName;
-    }
-
-    public String getProductText() {
-        return productText;
     }
 
     public void setProductText(String productText) {
         this.productText = productText;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    public List<QueryEntity> getQueries() {
-        return queries;
     }
 
     public void setQueries(List<QueryEntity> queries) {
