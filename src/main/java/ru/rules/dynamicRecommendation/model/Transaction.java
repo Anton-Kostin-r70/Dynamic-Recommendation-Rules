@@ -1,6 +1,7 @@
 package ru.rules.dynamicRecommendation.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
 
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
  * associated with users and financial products.
  * Corresponds to the "transactions" table in the database.
  */
+@Getter
 @Entity
 @Table(name = "transactions")
 public class Transaction {
@@ -104,49 +106,24 @@ public class Transaction {
         this.createdAt = LocalDateTime.now(); // Автоматически устанавливаем текущую дату
     }
 
-    public Long getId() {
-        return id;
-    }
-
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
     }
 
     public void setUserId(Long userId) {
         this.userId = userId;
     }
 
-    public ProductType getProductType() {
-        return productType;
-    }
-
     public void setProductType(ProductType productType) {
         this.productType = productType;
-    }
-
-
-    public TransactionType getTransactionType() {
-        return transactionType;
     }
 
     public void setTransactionType(TransactionType transactionType) {
         this.transactionType = transactionType;
     }
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {

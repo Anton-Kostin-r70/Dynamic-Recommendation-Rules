@@ -1,14 +1,13 @@
 package ru.rules.dynamicRecommendation.model.query;
 
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
-import ru.rules.dynamicRecommendation.enums.QueryType;
-import ru.rules.dynamicRecommendation.enums.TransactionType;
 import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
-import java.util.Arrays;
-import java.util.List;
+import static ru.rules.dynamicRecommendation.enums.QueryType.TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW;
 
 /**
  * Query implementation that compares deposit and withdrawal sums for a specific product type.
@@ -21,20 +20,45 @@ import java.util.List;
  */
 public class TransactionSumCompareDepositWithdrawQuery extends Query {
 
+    private final KnowledgeRepository knowledgeRepository;
+
     /**
-     * Constructor for creating a TransactionSumCompareDepositWithdrawQuery instance.
+     * Constructor for creating a {@code TransactionSumCompareDepositWithdrawQuery} instance from a QueryDTO object.
      *
-     * @param arguments list of arguments required for query execution; must contain exactly two elements:
-     *                  1. Product type as a string (e.g., "DEBIT", "CREDIT") — converted to ProductType enum
-     *                  2. Comparison operator as a string (e.g., ">", "<", "=") — converted to ComparisonOperatorType enum
-     * @param negate    flag indicating whether to negate the evaluation result:
-     *                  - false: return true if the comparison condition is met
-     *                  - true: return true if the comparison condition is NOT met
-     * @throws IllegalArgumentException if arguments list is null, doesn't have exactly 2 elements,
-     *                                  or contains invalid product type/operator
+     * @param queryDTO data transfer object containing query configuration; must not be null.
+     *               The DTO should provide:
+     *               <ul>
+     *               <li>{@code query} — must be "TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW" (validated by the parent constructor)</li>
+     *               <li>{@code arguments} — list of string parameters; must contain exactly two elements:
+     *                   <ol>
+     *                   <li>Product type as a string (e.g., "DEBIT", "CREDIT") — converted to {@link ProductType} enum</li>
+     *                   <li>Comparison operator as a string (e.g., ">", "<", "=") — converted to {@link ComparisonOperatorType} enum</li>
+     *                   </ol>
+     *               </li>
+     *               <li>{@code negate} — flag indicating whether to negate the evaluation result:
+     *                   <ul>
+     *                   <li><b>false</b>: return {@code true} if the comparison condition is met (deposit sum vs withdraw sum)</li>
+     *                   <li><b>true</b>: return {@code true} if the comparison condition is NOT met</li>
+     *                   </ul>
+     *               </li>
+     *               </ul>
+     * @param knowledgeRepository repository providing business logic for transaction sum calculations and comparisons
+     *                        (deposit vs withdraw sums for a product type); must not be null. This repository
+     *                        will be used in the {@link #evaluate} method to perform the actual comparison logic.
+     * @throws IllegalArgumentException if:
+     *        <ul>
+     *        <li>{@code queryDTO} is null</li>
+     *        <li>the query type extracted from {@code queryDTO.getQuery()} is not "TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW"</li>
+     *        <li>the arguments list ({@code queryDTO.getArguments()}) is null</li>
+     *        <li>the arguments list does not contain exactly 2 elements</li>
+     *        <li>any of the arguments is invalid (cannot be parsed to the corresponding enum)</li>
+     *        </ul>
+     * @throws NullPointerException if {@code knowledgeRepository} is null
      */
-    public TransactionSumCompareDepositWithdrawQuery(List<String> arguments, boolean negate) {
-        super(QueryType.TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW, arguments, negate);
+    public TransactionSumCompareDepositWithdrawQuery(QueryDTO queryDTO, KnowledgeRepository knowledgeRepository) {
+        super(queryDTO);
+        this.knowledgeRepository = knowledgeRepository;
+        validateArguments(2, TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW);
     }
 
     /**
@@ -60,77 +84,12 @@ public class TransactionSumCompareDepositWithdrawQuery extends Query {
      */
     @Override
     public boolean evaluate(Users user, TransactionRepository transactionRepository) {
-        // Validate input parameters
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (transactionRepository == null) {
-            throw new IllegalArgumentException("Transaction repository cannot be null");
-        }
-        if (arguments == null || arguments.size() != 2) {
-            throw new IllegalArgumentException(
-                    "Arguments must contain exactly 2 elements: productType and operator");
-        }
+        String depositProductType = arguments.get(0);
+        String withdrawProductType = arguments.get(1);
 
-        try {
-            // Extract parameters from arguments
-            ProductType productType = ProductType.valueOf(arguments.get(0));
-            ComparisonOperatorType operator = parseOperator(arguments.get(1));
-
-            // Calculate total deposit and withdrawal amounts
-            long depositSum = transactionRepository.sumByUserIdAndProductTypeAndTransactionType(
-                    user.getId(), productType, TransactionType.DEPOSIT);
-            long withdrawSum = transactionRepository.sumByUserIdAndProductTypeAndTransactionType(
-                    user.getId(), productType, TransactionType.WITHDRAW);
-
-            // Compare sums using the specified operator
-            boolean comparisonResult = compare(depositSum, withdrawSum, operator);
-
-            // Apply negation if required
-            return negate ? !comparisonResult : comparisonResult;
-        } catch (IllegalArgumentException e) {
-            // Re‑throw with context if parsing fails
-            throw new IllegalArgumentException("Error in query evaluation: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Parses a string representation of a comparison operator into the corresponding enum value.
-     *
-     * @param operatorStr string representation of the operator (e.g., ">", "<", "=")
-     * @return corresponding ComparisonOperatorType enum value
-     * @throws IllegalArgumentException if the operator string is not recognized
-     */
-    private ComparisonOperatorType parseOperator(String operatorStr) {
-        return Arrays.stream(ComparisonOperatorType.values())
-                .filter(op -> op.getOperator().equals(operatorStr))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown operator: " + operatorStr));
-    }
-
-    /**
-     * Compares two sum values using the specified comparison operator.
-     *
-     * @param depositSum  total amount of deposits
-     * @param withdrawSum total amount of withdrawals
-     * @param operator    the comparison operator to use
-     * @return result of the comparison (true if condition is met, false otherwise)
-     * @throws IllegalArgumentException if an unknown operator is provided
-     */
-    private boolean compare(long depositSum, long withdrawSum, ComparisonOperatorType operator) {
-        switch (operator) {
-            case OP_MORE_THAN:
-                return depositSum > withdrawSum;
-            case OP_LESS_THAN:
-                return depositSum < withdrawSum;
-            case OP_EQUAL:
-                return depositSum == withdrawSum;
-            case OP_MORE_OR_EQUAL:
-                return depositSum >= withdrawSum;
-            case OP_LESS_OR_EQUAL:
-                return depositSum <= withdrawSum;
-            default:
-                throw new IllegalArgumentException("Unknown operator: " + operator);
-        }
+        boolean result = knowledgeRepository.compareDepositWithdraw(
+                user.getId(), depositProductType, withdrawProductType
+        );
+        return negate ? !result : result;
     }
 }

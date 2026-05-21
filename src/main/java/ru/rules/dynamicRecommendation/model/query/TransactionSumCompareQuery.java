@@ -1,15 +1,15 @@
 package ru.rules.dynamicRecommendation.model.query;
 
 
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
-import ru.rules.dynamicRecommendation.enums.QueryType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
 import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
-import java.util.Arrays;
-import java.util.List;
+import static ru.rules.dynamicRecommendation.enums.QueryType.TRANSACTION_SUM_COMPARE;
 
 /**
  * Query implementation that compares a user's transaction sum for a specific product and transaction type
@@ -21,22 +21,47 @@ import java.util.List;
  */
 public class TransactionSumCompareQuery extends Query {
 
+    private final KnowledgeRepository knowledgeRepository;
+
     /**
-     * Constructor for creating a TransactionSumCompareQuery instance.
+     * Constructor for creating a {@code TransactionSumCompareQuery} instance from a QueryDTO object.
      *
-     * @param arguments list of arguments required for query execution; must contain exactly four elements:
-     *                  1. Product type as a string (e.g., "DEBIT", "CREDIT") — converted to ProductType enum
-     *                  2. Transaction type as a string ("DEPOSIT" or "WITHDRAW") — converted to TransactionType enum
-     *                  3. Comparison operator as a string (e.g., ">", "<", "=") — converted to ComparisonOperatorType enum
-     *                  4. Constant value as a string — converted to long, representing the threshold amount
-     * @param negate    flag indicating whether to negate the evaluation result:
-     *                  - false: return true if the comparison condition is met
-     *                  - true: return true if the comparison condition is NOT met
-     * @throws IllegalArgumentException if arguments list is null, doesn't have exactly 4 elements,
-     *                                  or contains invalid values for any of the parameters
+     * @param queryDTO            data transfer object containing query configuration; must not be null.
+     *                            The DTO should provide:
+     *                            <ul>
+     *                            <li>{@code query} — must be "TRANSACTION_SUM_COMPARE" (validated by the parent constructor)</li>
+     *                            <li>{@code arguments} — list of string parameters; must contain exactly four elements:
+     *                                <ol>
+     *                                <li>Product type as a string (e.g., "DEBIT", "CREDIT") — converted to {@link ProductType} enum</li>
+     *                                <li>Transaction type as a string ("DEPOSIT" or "WITHDRAW") — converted to {@link TransactionType} enum</li>
+     *                                <li>Comparison operator as a string (e.g., ">", "<", "=") — converted to {@link ComparisonOperatorType} enum</li>
+     *                                <li>Constant value as a string — converted to {@code long}, representing the threshold amount for comparison</li>
+     *                                </ol>
+     *                            </li>
+     *                            <li>{@code negate} — flag indicating whether to negate the evaluation result:
+     *                                <ul>
+     *                                <li><b>false</b>: return {@code true} if the comparison condition is met</li>
+     *                                <li><b>true</b>: return {@code true} if the comparison condition is NOT met</li>
+     *                                </ul>
+     *                            </li>
+     *                            </ul>
+     * @param knowledgeRepository repository providing business logic for transaction sum calculations and comparisons;
+     *                            must not be null. This repository will be used in the {@link #evaluate} method
+     *                            to perform the actual comparison logic.
+     * @throws IllegalArgumentException if:
+     *                                  <ul>
+     *                                  <li>{@code queryDTO} is null</li>
+     *                                  <li>the query type extracted from {@code queryDTO.getQuery()} is not "TRANSACTION_SUM_COMPARE"</li>
+     *                                  <li>the arguments list ({@code queryDTO.getArguments()}) is null</li>
+     *                                  <li>the arguments list does not contain exactly 4 elements</li>
+     *                                  <li>any of the arguments is invalid (cannot be parsed to the corresponding enum or long value)</li>
+     *                                  </ul>
+     * @throws NullPointerException     if {@code knowledgeRepository} is null
      */
-    public TransactionSumCompareQuery(List<String> arguments, boolean negate) {
-        super(QueryType.TRANSACTION_SUM_COMPARE, arguments, negate);
+    public TransactionSumCompareQuery(QueryDTO queryDTO, KnowledgeRepository knowledgeRepository) {
+        super(queryDTO);
+        this.knowledgeRepository = knowledgeRepository;
+        validateArguments(4, TRANSACTION_SUM_COMPARE);
     }
 
     /**
@@ -60,75 +85,14 @@ public class TransactionSumCompareQuery extends Query {
      */
     @Override
     public boolean evaluate(Users user, TransactionRepository transactionRepository) {
-        // Validate input parameters
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (transactionRepository == null) {
-            throw new IllegalArgumentException("Transaction repository cannot be null");
-        }
-        if (arguments == null || arguments.size() != 4) {
-            throw new IllegalArgumentException(
-                    "Arguments must contain exactly 4 elements: productType, transactionType, operator, constant");
-        }
-        try {
-            // Extract parameters from arguments
-            ProductType productType = ProductType.valueOf(arguments.get(0));
-            TransactionType transactionType = TransactionType.valueOf(arguments.get(1));
-            ComparisonOperatorType operator = parseOperator(arguments.get(2));
-            long constant = Long.parseLong(arguments.get(3));
+        String productType = arguments.get(0);
+        String transactionType = arguments.get(1);
+        String operator = arguments.get(2);
+        int threshold = Integer.parseInt(arguments.get(3));
 
-            // Calculate total transaction sum
-            long sum = transactionRepository.sumByUserIdAndProductTypeAndTransactionType(
-                    user.getId(), productType, transactionType);
-
-            // Compare sum against constant using specified operator
-            boolean comparisonResult = compare(sum, constant, operator);
-
-            // Apply negation if required
-            return negate ? !comparisonResult : comparisonResult;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Error in query evaluation: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Parses a string representation of a comparison operator into the corresponding enum value.
-     *
-     * @param operatorStr string representation of the operator (e.g., ">", "<", "=")
-     * @return corresponding ComparisonOperatorType enum value
-     * @throws IllegalArgumentException if the operator string is not recognized
-     */
-    private ComparisonOperatorType parseOperator(String operatorStr) {
-        return Arrays.stream(ComparisonOperatorType.values())
-                .filter(op -> op.getOperator().equals(operatorStr))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Unknown operator: " + operatorStr));
-    }
-
-    /**
-     * Compares a transaction sum against a constant value using the specified comparison operator.
-     *
-     * @param sum      total transaction amount to compare
-     * @param constant threshold value to compare against
-     * @param operator the comparison operator to use
-     * @return result of the comparison (true if condition is met, false otherwise)
-     * @throws IllegalArgumentException if an unknown operator is provided
-     */
-    private boolean compare(long sum, long constant, ComparisonOperatorType operator) {
-        switch (operator) {
-            case OP_MORE_THAN:
-                return sum > constant;
-            case OP_LESS_THAN:
-                return sum < constant;
-            case OP_EQUAL:
-                return sum == constant;
-            case OP_MORE_OR_EQUAL:
-                return sum >= constant;
-            case OP_LESS_OR_EQUAL:
-                return sum <= constant;
-            default:
-                throw new IllegalArgumentException("Unknown operator: " + operator);
-        }
+        boolean result = knowledgeRepository.compareTransactionSum(
+                user.getId(), productType, transactionType, operator, threshold
+        );
+        return negate ? !result : result;
     }
 }

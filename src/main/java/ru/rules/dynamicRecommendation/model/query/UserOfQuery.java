@@ -1,11 +1,13 @@
 package ru.rules.dynamicRecommendation.model.query;
 
 
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.*;
 import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
-import java.util.List;
+import static ru.rules.dynamicRecommendation.enums.QueryType.USER_OF;
 
 /**
  * Query implementation that checks whether a user has any transactions for a specific product type.
@@ -18,18 +20,37 @@ import java.util.List;
  */
 public class UserOfQuery extends Query {
 
+    private final KnowledgeRepository knowledgeRepository;
+
     /**
-     * Constructor for creating a UserOfQuery instance.
+     * Constructor for creating a {@code UserOfQuery} instance from a QueryDTO object.
      *
-     * @param arguments list of arguments required for query execution; must contain exactly one element:
-     *                  1. Product type as a string (e.g., "DEBIT", "CREDIT") — converted to ProductType enum
-     * @param negate    flag indicating whether to negate the evaluation result:
-     *                  - false: return true if user has at least one transaction for the product type
-     *                  - true: return true if user has NO transactions for the product type
-     * @throws IllegalArgumentException if arguments list is null, empty, or contains invalid product type
+     * @param queryDTO            data transfer object containing query configuration; must not be null.
+     *                            The DTO should provide:
+     *                            <ul>
+     *                            <li>{@code query} — must be "USER_OF" (will be validated by the parent constructor)</li>
+     *                            <li>{@code arguments} — list of string parameters; must contain exactly one element:
+     *                                <ul>
+     *                                <li>Product type as a string (e.g., "DEBIT", "CREDIT") — converted to {@link ProductType} enum</li>
+     *                                </ul>
+     *                            </li>
+     *                            <li>{@code negate} — flag indicating whether to negate the evaluation result</li>
+     *                            </ul>
+     * @param knowledgeRepository repository providing business logic for user‑product relationship checks;
+     *                            must not be null
+     * @throws IllegalArgumentException if:
+     *                                  <ul>
+     *                                  <li>{@code queryDTO} is null</li>
+     *                                  <li>the query type extracted from {@code queryDTO.getQuery()} is not "USER_OF"</li>
+     *                                  <li>the arguments list ({@code queryDTO.getArguments()}) is null or empty</li>
+     *                                  <li>the product type argument is invalid (cannot be parsed to {@link ProductType})</li>
+     *                                  </ul>
+     * @throws NullPointerException     if {@code knowledgeRepository} is null
      */
-    public UserOfQuery(List<String> arguments, boolean negate) {
-        super(QueryType.USER_OF, arguments, negate);
+    public UserOfQuery(QueryDTO queryDTO, KnowledgeRepository knowledgeRepository) {
+        super(queryDTO);
+        this.knowledgeRepository = knowledgeRepository;
+        validateArguments(1, USER_OF);
     }
 
     /**
@@ -41,7 +62,7 @@ public class UserOfQuery extends Query {
      * 3. Checks if the count is at least 1 (user has interacted with the product).
      * 4. Applies negation if the negate flag is set.
      *
-     * @param client                the user to evaluate; must not be null
+     * @param user                  the user to evaluate; must not be null
      * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the evaluation:
      * - true: condition is met (user has transactions, or has none if negated)
@@ -53,35 +74,8 @@ public class UserOfQuery extends Query {
      *                                  - the product type argument is invalid (cannot be parsed to ProductType)
      */
     @Override
-    public boolean evaluate(Users client, TransactionRepository transactionRepository) {
-        // Validate input parameters
-        if (client == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (transactionRepository == null) {
-            throw new IllegalArgumentException("Transaction repository cannot be null");
-        }
-        if (arguments == null || arguments.isEmpty()) {
-            throw new IllegalArgumentException("Product type argument is missing");
-        }
-
-        try {
-            // Extract product type from arguments (first argument)
-            ProductType productType = ProductType.valueOf(arguments.get(0));
-
-            // Count user's transactions for the specified product type
-            long transactionCount = transactionRepository.countByUserIdAndProductType(
-                    client.getId(), productType);
-
-            // Determine if user has interacted with the product (at least one transaction)
-            boolean hasTransactions = transactionCount >= 1;
-
-            // Apply negation if required
-            return negate ? !hasTransactions : hasTransactions;
-        } catch (IllegalArgumentException e) {
-            // Re‑throw with context if product type parsing fails
-            throw new IllegalArgumentException(
-                    ("Invalid product type in arguments: " + arguments.get(0)), e);
-        }
+    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
+        boolean result = knowledgeRepository.isUserOf(user.getId(), arguments.get(0));
+        return negate ? !result : result;
     }
 }

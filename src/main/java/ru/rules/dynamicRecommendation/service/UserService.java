@@ -100,4 +100,8 @@ public class UserService {
     public List<Users> getAllUsers() {
         return userRepository.findAll();
     }
+
+    public Optional<Users> findById(Long id) {
+        return userRepository.findById(id);
+    }
 }

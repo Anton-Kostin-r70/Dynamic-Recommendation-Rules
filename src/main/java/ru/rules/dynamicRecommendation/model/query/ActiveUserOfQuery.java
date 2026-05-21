@@ -1,87 +1,104 @@
 package ru.rules.dynamicRecommendation.model.query;
 
-
+import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ProductType;
-import ru.rules.dynamicRecommendation.enums.QueryType;
 import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
-import java.util.List;
+import static ru.rules.dynamicRecommendation.enums.QueryType.ACTIVE_USER_OF;
 
 /**
  * Query implementation that checks whether a user is considered "active" for a specific product type.
  * A user is deemed active if they have made at least 5 transactions with the specified product type.
  * <p>
- * Used in recommendation rules to target engaged users or exclude inactive ones.
+ * Used in recommendation rules to target engaged users or exclude inactive ones. Example use cases:
+ * <ul>
+ *   <li>Offering premium features to active debit card users</li>
+ *   <li>Sending re‑engagement offers to inactive credit card holders</li>
+ * </ul>
+ * <p>
+ * The activity threshold (5 transactions) is hardcoded in the business logic of {@link KnowledgeRepository#isActiveUserOf}.
+ *
+ * @see KnowledgeRepository#isActiveUserOf
  */
 public class ActiveUserOfQuery extends Query {
 
+    private final KnowledgeRepository knowledgeRepository;
+
     /**
-     * Constructor for creating an ActiveUserOfQuery instance.
+     * Constructor for creating an {@code ActiveUserOfQuery} instance from a QueryDTO object.
      *
-     * @param arguments list of arguments required for query execution;
-     *                  must contain exactly one element — the product type as a string
-     *                  (e.g., "DEBIT", "CREDIT") that will be converted to ProductType enum
-     * @param negate    flag indicating whether to negate the evaluation result:
-     *                  - false: return true if user is active (≥5 transactions)
-     *                  - true: return true if user is NOT active (<5 transactions)
-     * @throws IllegalArgumentException if arguments list is null, empty, or contains invalid product type
+     * @param queryDTO             data transfer object containing query configuration; must not be null.
+     *                             The DTO should provide:
+     *                             <ul>
+     *                             <li>{@code query} — must be "ACTIVE_USER_OF" (validated by the parent constructor)</li>
+     *                             <li>{@code arguments} — list of string parameters; must contain exactly one element:
+     *                                 <ul>
+     *                                 <li>Product type as a string (e.g., "DEBIT", "CREDIT") — converted to {@link ProductType} enum
+     *                                     by the underlying repository</li>
+     *                                 </ul>
+     *                             </li>
+     *                             <li>{@code negate} — flag indicating whether to negate the evaluation result:
+     *                                 <ul>
+     *                                 <li><b>false</b>: return {@code true} if user is active (≥5 transactions with the product type)</li>
+     *                                 <li><b>true</b>: return {@code true} if user is NOT active (<5 transactions with the product type)</li>
+     *                                 </ul>
+     *                             </li>
+     *                             </ul>
+     * @param aKnowledgeRepository repository providing business logic for user activity checks;
+     *                             must not be null. This repository will be used in the {@link #evaluate} method
+     *                             to determine user activity status.
+     * @throws IllegalArgumentException if:
+     *                                  <ul>
+     *                                  <li>{@code queryDTO} is null</li>
+     *                                  <li>the query type extracted from {@code queryDTO.getQuery()} is not "ACTIVE_USER_OF"</li>
+     *                                  <li>the arguments list ({@code queryDTO.getArguments()}) is null or empty</li>
+     *                                  <li>the product type argument is invalid (cannot be parsed to {@link ProductType})</li>
+     *                                  </ul>
+     * @throws NullPointerException     if {@code aKnowledgeRepository} is null
      */
-    public ActiveUserOfQuery(List<String> arguments, boolean negate) {
-        super(QueryType.ACTIVE_USER_OF, arguments, negate);
+    public ActiveUserOfQuery(QueryDTO queryDTO, KnowledgeRepository aKnowledgeRepository) {
+        super(queryDTO);
+        this.knowledgeRepository = aKnowledgeRepository;
+        validateArguments(1, ACTIVE_USER_OF);
     }
 
     /**
-     * Evaluates whether the specified user is active for the given product type
-     * by counting their transactions.
-     * The evaluation logic:
-     * 1. Extracts the product type from the first argument.
-     * 2. Uses the transaction repository to count user's transactions for that product type.
-     * 3. Checks if the count is at least 5.
-     * 4. Applies negation if the negate flag is set.
+     * Evaluates whether the specified user is active for the given product type by counting their transactions.
+     * The evaluation follows this logic:
+     * <ol>
+     *   <li>Extracts the product type from the first argument ({@code arguments.get(0)}).</li>
+     *   <li>Uses {@link KnowledgeRepository} to count user's transactions for that product type.</li>
+     *   <li>Checks if the count is at least 5 (activity threshold).</li>
+     *   <li>Applies negation if the {@code negate} flag is set.</li>
+     * </ol>
      *
-     * @param user                  the user to evaluate; must not be null
-     * @param transactionRepository repository for accessing transaction data; must not be null
+     * @param user                  the user to evaluate; must not be null. The user's ID is used for transaction lookup.
+     * @param transactionRepository repository for accessing transaction data; must not be null.
+     *                              Note: This parameter is currently not used directly by this query —
+     *                              the logic is delegated to {@link KnowledgeRepository}.
      * @return boolean result of the evaluation:
-     * - true: condition is met (user is active, or not active if negated)
-     * - false: condition is not met (user is not active, or is active if negated)
-     * @throws IllegalArgumentException if:
-     *                                  - user is null
-     *                                  - transactionRepository is null
-     *                                  - arguments list is empty
-     *                                  - the product type argument is invalid (cannot be parsed to ProductType)
-     * @throws RuntimeException         if database access fails
+     * <ul>
+     * <li><b>true</b>: condition is met
+     *     <ul>
+     *     <li>user is active (≥5 transactions) when {@code negate = false}</li>
+     *     <li>user is not active (<5 transactions) when {@code negate = true}</li>
+     *     </ul>
+     * </li>
+     * <li><b>false</b>: condition is not met
+     *     <ul>
+     *     <li>user is not active when {@code negate = false}</li>
+     *     <li>user is active when {@code negate = true}</li>
+     *     </ul>
+     * </li>
+     * </ul>
+     * @throws IllegalArgumentException if {@code user} is null or if arguments are invalid
+     * @throws RuntimeException         if database access fails in {@link KnowledgeRepository}
      */
     @Override
     public boolean evaluate(Users user, TransactionRepository transactionRepository) {
-        // Validate input parameters
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null");
-        }
-        if (transactionRepository == null) {
-            throw new IllegalArgumentException("Transaction repository cannot be null");
-        }
-        if (arguments.isEmpty()) {
-            throw new IllegalArgumentException("Product type argument is missing");
-        }
-
-        try {
-            // Extract product type from arguments (first argument)
-            ProductType productType = ProductType.valueOf(arguments.get(0));
-
-            // Count user's transactions for the specified product type
-            long transactionCount = transactionRepository.countByUserIdAndProductType(
-                    user.getId(), productType);
-
-            // Determine if user is active (at least 5 transactions)
-            boolean isActive = transactionCount >= 5;
-
-            // Apply negation if required
-            return negate ? !isActive : isActive;
-        } catch (IllegalArgumentException e) {
-            // Re‑throw with context if product type parsing fails
-            throw new IllegalArgumentException(
-                    ("Invalid product type in arguments: " + arguments.get(0)), e);
-        }
+        boolean result = knowledgeRepository.isActiveUserOf(user.getId(), arguments.get(0));
+        return negate != result;
     }
 }

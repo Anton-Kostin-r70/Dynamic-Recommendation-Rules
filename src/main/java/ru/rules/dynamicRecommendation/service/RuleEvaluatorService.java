@@ -6,10 +6,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.dto.RuleDTO;
 import ru.rules.dynamicRecommendation.enums.QueryType;
+import ru.rules.dynamicRecommendation.model.Users;
+import ru.rules.dynamicRecommendation.model.query.Query;
+import ru.rules.dynamicRecommendation.model.query.QueryFactory;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
+import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -19,6 +23,8 @@ public class RuleEvaluatorService {
 
     private final KnowledgeRepository knowledgeRepository;
     private final RuleService ruleService;
+    private final UserService usersService;
+    private final TransactionRepository transactionRepository;
 
     /**
      * Evaluates whether a recommendation rule applies to a specific user by checking all its conditions.
@@ -73,65 +79,61 @@ public class RuleEvaluatorService {
     /**
      * Evaluates a condition for a given user based on the provided query type and arguments.
      * <p>
-     * The method determines which condition to check by analyzing the query type, validates
-     * the number of arguments, and delegates the actual evaluation to the knowledge repository.
+     * The method performs the following steps:
+     * <ol>
+     *   <li>Creates an appropriate {@link Query} implementation via {@link QueryFactory#createQuery}</li>
+     *   <li>Retrieves the user from the database using {@link UserService#findById}</li>
+     *   <li>Delegates the actual evaluation to the created query's {@link Query#evaluate} method</li>
+     * </ol>
      * <p>
      * Supported query types:
      * <ul>
      *   <li>{@link QueryType#USER_OF} — checks if the user is associated with a specific product</li>
-     *   <li>{@link QueryType#ACTIVE_USER_OF} — checks if the user has an active relationship with a product</li>
-     *   <li>{@link QueryType#TRANSACTION_SUM_COMPARE} — compares aggregated transaction sum against a threshold</li>
-     *   <li>{@link QueryType#TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW} — compares deposit and withdrawal sums</li>
+     *   <li>{@link QueryType#ACTIVE_USER_OF} — checks if the user has an active relationship with a product
+     *       (i.e., at least 5 transactions of the specified type)</li>
+     *   <li>{@link QueryType#TRANSACTION_SUM_COMPARE} — compares aggregated transaction sum against a threshold
+     *       for a specific product and transaction type</li>
+     *   <li>{@link QueryType#TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW} — compares deposit and withdrawal sums
+     *       for a specific product type</li>
      * </ul>
      *
-     * @param userId   the unique identifier of the user for whom the condition is evaluated
-     * @param queryDTO the data transfer object containing:
+     * @param userId   the unique identifier of the user for whom the condition is evaluated;
+     *                 must not be null
+     * @param queryDTO the data transfer object containing query configuration; must not be null.
+     *                 The DTO should provide:
      *                 <ul>
-     *                   <li>query type ({@code getQuery()})</li>
-     *                   <li>list of arguments ({@code getArguments()})</li>
+     *                   <li>query type via {@code getQuery()} — determines the concrete query implementation</li>
+     *                   <li>list of arguments via {@code getArguments()} — parameters required for the specific query</li>
      *                 </ul>
-     * @return {@code true} if the condition is met; {@code false} otherwise
-     * @throws IllegalArgumentException      if the number of arguments doesn't match the expected count
-     *                                       or if an argument cannot be parsed (e.g., invalid number format)
-     * @throws UnsupportedOperationException if an unknown query type is provided
+     * @return {@code true} if the condition is met according to the query logic and negation flag;
+     * {@code false} otherwise
+     * @throws IllegalArgumentException      if:
+     *                                       <ul>
+     *                                         <li>{@code userId} is null</li>
+     *                                         <li>user with the specified {@code userId} does not exist</li>
+     *                                         <li>the number of arguments in {@code queryDTO} doesn't match the expected count for the query type</li>
+     *                                         <li>an argument cannot be parsed (e.g., invalid number format or enum value)</li>
+     *                                       </ul>
+     * @throws UnsupportedOperationException if an unknown query type is provided in {@code queryDTO.getQuery()}</li>
+     * @throws NullPointerException          if either {@code userId} or {@code queryDTO} is null
      * @see QueryType
+     * @see QueryFactory#createQuery(QueryDTO, KnowledgeRepository)
+     * @see UserService#findById(Long)
      * @see KnowledgeRepository#isUserOf(Long, String)
      * @see KnowledgeRepository#isActiveUserOf(Long, String)
      * @see KnowledgeRepository#compareTransactionSum(Long, String, String, String, int)
      * @see KnowledgeRepository#compareDepositWithdraw(Long, String, String)
      */
     private boolean evaluateCondition(Long userId, QueryDTO queryDTO) {
-        return switch (QueryType.valueOf(queryDTO.getQuery())) {
-            case USER_OF -> {
-                validateArguments(queryDTO, 1, "USER_OF");
-                yield knowledgeRepository.isUserOf(userId, queryDTO.getArguments().get(0));
-            }
-            case ACTIVE_USER_OF -> {
-                validateArguments(queryDTO, 1, "ACTIVE_USER_OF");
-                yield knowledgeRepository.isActiveUserOf(userId, queryDTO.getArguments().get(0));
-            }
-            case TRANSACTION_SUM_COMPARE -> {
-                validateArguments(queryDTO, 4, "TRANSACTION_SUM_COMPARE");
-                var args = queryDTO.getArguments();
-                yield knowledgeRepository.compareTransactionSum(
-                        userId,
-                        args.get(0),
-                        args.get(1),
-                        args.get(2),
-                        Integer.parseInt(args.get(3))
-                );
-            }
-            case TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW -> {
-                validateArguments(queryDTO, 2, "TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW");
-                var args = queryDTO.getArguments();
-                yield knowledgeRepository.compareDepositWithdraw(
-                        userId,
-                        args.get(0),
-                        args.get(1)
-                );
-            }
-            default -> throw new UnsupportedOperationException("неизвестный запрос: " + queryDTO.getQuery());
-        };
+        Query query = QueryFactory.createQuery(queryDTO, knowledgeRepository);
+
+        Optional<Users> userOptional = usersService.findById(userId);
+        if (userOptional.isEmpty()) {
+            throw new IllegalArgumentException("User not found: " + userId);
+        }
+
+        Users user = userOptional.get();
+        return query.evaluate(user, transactionRepository);
     }
 
     /**
@@ -147,23 +149,5 @@ public class RuleEvaluatorService {
                 .filter(dto -> evaluate(dto, userId))
                 .collect(Collectors.toList());
         return relevantRules;
-    }
-
-    /**
-     * Validates that the number of arguments matches the expected count for the query type.
-     *
-     * @param queryDTO      DTO containing the query and its arguments
-     * @param expectedCount the expected number of arguments
-     * @param queryName     the query name for the error message
-     * @throws IllegalArgumentException if the number of arguments does not match the expected count
-     */
-    private void validateArguments(QueryDTO queryDTO, int expectedCount, String queryName) {
-        int actualCount = queryDTO.getArguments().size();
-        if (actualCount != expectedCount) {
-            throw new IllegalArgumentException(
-                    String.format("Запрос %s ожидает %d аргументов, но получено %d",
-                            queryName, expectedCount, actualCount)
-            );
-        }
     }
 }
