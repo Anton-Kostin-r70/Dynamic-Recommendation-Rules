@@ -2,7 +2,6 @@ package ru.rules.dynamicRecommendation.model.query;
 
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ProductType;
-import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
@@ -74,7 +73,7 @@ public class ActiveUserOfQuery extends Query {
      *   <li>Applies negation if the {@code negate} flag is set.</li>
      * </ol>
      *
-     * @param user                  the user to evaluate; must not be null. The user's ID is used for transaction lookup.
+     * @param userId                  the user to evaluate; must not be null. The user's ID is used for transaction lookup.
      * @param transactionRepository repository for accessing transaction data; must not be null.
      *                              Note: This parameter is currently not used directly by this query —
      *                              the logic is delegated to {@link KnowledgeRepository}.
@@ -97,8 +96,8 @@ public class ActiveUserOfQuery extends Query {
      * @throws RuntimeException         if database access fails in {@link KnowledgeRepository}
      */
     @Override
-    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
-        boolean result = knowledgeRepository.isActiveUserOf(user.getId(), arguments.get(0));
+    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
+        boolean result = knowledgeRepository.isActiveUserOf(userId, arguments.get(0));
         return negate != result;
     }
 }

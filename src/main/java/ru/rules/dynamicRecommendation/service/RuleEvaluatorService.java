@@ -125,15 +125,13 @@ public class RuleEvaluatorService {
      * @see KnowledgeRepository#compareDepositWithdraw(Long, String, String)
      */
     private boolean evaluateCondition(Long userId, QueryDTO queryDTO) {
-        Query query = QueryFactory.createQuery(queryDTO, knowledgeRepository);
 
+        Query query = QueryFactory.createQuery(queryDTO, knowledgeRepository);
         Optional<Users> userOptional = usersService.findById(userId);
         if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("User not found: " + userId);
         }
-
-        Users user = userOptional.get();
-        return query.evaluate(user, transactionRepository);
+        return query.evaluate(userId, transactionRepository);
     }
 
     /**

@@ -2,7 +2,6 @@ package ru.rules.dynamicRecommendation.model.query;
 
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.QueryType;
-import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
@@ -87,7 +86,7 @@ public abstract class Query {
      * Evaluates the query condition for a specific user using transaction data.
      * The actual evaluation logic is implemented by concrete subclasses.
      *
-     * @param user                  the user for whom the recommendation is being evaluated; must not be null
+     * @param userId                  the user for whom the recommendation is being evaluated; must not be null
      * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the condition check:
      * <ul>
@@ -97,7 +96,7 @@ public abstract class Query {
      * @throws IllegalArgumentException if {@code user} or {@code transactionRepository} is null
      * @throws RuntimeException         if evaluation fails due to data issues or internal errors
      */
-    public abstract boolean evaluate(Users user, TransactionRepository transactionRepository);
+    public abstract boolean evaluate(Long userId, TransactionRepository transactionRepository);
 
     /**
      * Validates that the number of provided arguments matches the expected count for the query type.

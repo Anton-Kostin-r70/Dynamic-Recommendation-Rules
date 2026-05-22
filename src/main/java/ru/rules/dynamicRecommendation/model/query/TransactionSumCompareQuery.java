@@ -5,7 +5,6 @@ import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
-import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
@@ -65,33 +64,33 @@ public class TransactionSumCompareQuery extends Query {
     }
 
     /**
-     * Evaluates the condition by comparing a user's transaction sum against a constant threshold.
+     * Evaluates the condition by comparing a userId's transaction sum against a constant threshold.
      * The evaluation logic:
      * 1. Extracts product type, transaction type, operator, and constant from arguments.
      * 2. Retrieves the total transaction sum for the specified product and transaction types.
      * 3. Compares the sum against the constant using the specified operator.
      * 4. Applies negation if the negate flag is set.
      *
-     * @param user                  the user to evaluate; must not be null
+     * @param userId                  the userId to evaluate; must not be null
      * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the evaluation:
      * - true: condition is met (comparison passes, or fails if negated)
      * - false: condition is not met (comparison fails, or passes if negated)
      * @throws IllegalArgumentException if:
-     *                                  - user is null
+     *                                  - userId is null
      *                                  - transactionRepository is null
      *                                  - arguments list doesn't contain exactly 4 elements
      *                                  - any argument is invalid (unparsable product type, transaction type, operator, or constant)
      */
     @Override
-    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
+    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
         String productType = arguments.get(0);
         String transactionType = arguments.get(1);
         String operator = arguments.get(2);
         int threshold = Integer.parseInt(arguments.get(3));
 
         boolean result = knowledgeRepository.compareTransactionSum(
-                user.getId(), productType, transactionType, operator, threshold
+                userId, productType, transactionType, operator, threshold
         );
         return negate ? !result : result;
     }
