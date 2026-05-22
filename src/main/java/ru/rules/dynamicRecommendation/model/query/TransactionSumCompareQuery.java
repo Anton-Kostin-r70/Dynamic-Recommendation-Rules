@@ -67,10 +67,12 @@ public class TransactionSumCompareQuery extends Query {
      * <p>
      * The evaluation logic:
      * 1. Extracts parameters from arguments:
-     *    - {@code arguments.get(0)} — product type
-     *    - {@code arguments.get(1)} — transaction type
-     *    - {@code arguments.get(2)} — comparison operator
-     *    - {@code arguments.get(3)} — threshold constant (as string, parsed to integer)
+     *    <ul>
+     *    <li>{@code arguments.get(0)} — product type (parsed to {@link ProductType})</li>
+     *    <li>{@code arguments.get(1)} — transaction type (parsed to {@link TransactionType})</li>
+     *    <li>{@code arguments.get(2)} — comparison operator (parsed to {@link ComparisonOperatorType})</li>
+     *    <li>{@code arguments.get(3)} — threshold constant (as string, parsed to integer)</li>
+     *    </ul>
      * 2. Retrieves the total transaction sum for the specified product and transaction types.
      * 3. Compares the sum against the threshold using the specified operator.
      * 4. Applies negation if the {@code negate} flag is set.
@@ -93,28 +95,26 @@ public class TransactionSumCompareQuery extends Query {
      * </ul>
      *
      * @throws IllegalArgumentException if:
-     *   - {@code userId} is null
-     *   - {@code arguments} list doesn't contain exactly 4 elements
-     *   - any argument is invalid:
-     *     <ul>
-     *     <li>product type is null or empty</li>
-     *     <li>transaction type is null or empty</li>
-     *     <li>operator is unsupported (not one of: "==", "!=", ">", ">=", "<", "<=")</li>
-     *     <li>threshold constant is not a valid integer string (e.g., "abc", null, or empty)</li>
-     *     </ul>
+     *   <ul>
+     *   <li>{@code userId} is null</li>
+     *   <li>{@code arguments} list doesn't contain exactly 4 elements</li>
+     *   <li>product type argument is invalid (cannot be parsed to a valid {@link ProductType})</li>
+     *   <li>transaction type argument is invalid (cannot be parsed to a valid {@link TransactionType})</li>
+     *   <li>operator argument is invalid (cannot be parsed to a valid {@link ComparisonOperatorType}, or is an unsupported operator)</li>
+     *   <li>threshold constant is not a valid integer string (e.g., "abc", null, or empty)</li>
+     *   </ul>
      * @throws RuntimeException if database access fails during sum calculation
      *        (e.g., connection issues, query execution errors, or data retrieval problems)
      */
     @Override
     public boolean evaluate(Long userId) {
-        String productType = arguments.get(0);
-        String transactionType = arguments.get(1);
-        String operator = arguments.get(2);
-        int threshold = Integer.parseInt(arguments.get(3));
+        ProductType productType = ProductType.fromType(arguments.get(0));
+        TransactionType transactionType = TransactionType.fromType(arguments.get(1));
+        ComparisonOperatorType operator = ComparisonOperatorType.fromType(arguments.get(2));
+        int constant = Integer.parseInt(arguments.get(3));
 
         boolean result = knowledgeRepository.compareTransactionSum(
-                userId, productType, transactionType, operator, threshold
-        );
+                userId, productType, transactionType, operator, constant);
         return negate != result;
     }
 }

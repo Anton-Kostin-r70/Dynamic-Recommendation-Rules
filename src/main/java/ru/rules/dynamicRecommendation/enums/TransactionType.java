@@ -17,7 +17,7 @@ public enum TransactionType {
      *   <li>Receiving a salary payment</li>
      * </ul>
      */
-    DEPOSIT,
+    DEPOSIT("DEPOSIT"),
     /**
      * A withdrawal transaction.
      * Indicates an operation where funds are removed from a user's account.
@@ -30,5 +30,29 @@ public enum TransactionType {
      *   <li>Transferring money to another account</li>
      * </ul>
      */
-    WITHDRAW
+    WITHDRAW("WITHDRAW");
+
+    private final String type;
+
+    TransactionType(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public static TransactionType fromType(String type) {
+        for (TransactionType transactionType : values()) {
+            if (transactionType.getType().equalsIgnoreCase(type)) {
+                return transactionType;
+            }
+        }
+        throw new IllegalArgumentException("No Transaction found for type: " + type);
+    }
+
+    @Override
+    public String toString() {
+        return type;
+    }
 }

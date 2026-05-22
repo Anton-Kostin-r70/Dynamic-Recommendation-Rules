@@ -17,7 +17,21 @@ public enum ComparisonOperatorType {
         this.operator = op;
     }
 
-    public String getOperator() {
+    public static ComparisonOperatorType fromType(String op) {
+        for (ComparisonOperatorType comparisonOperatorType : values()) {
+            if (comparisonOperatorType.getOperator().equalsIgnoreCase(op)) {
+                return comparisonOperatorType;
+            }
+        }
+        throw new IllegalArgumentException("No operator found for type: " + op);
+    }
+
+    private String getOperator() {
+        return operator;
+    }
+
+    @Override
+    public String toString() {
         return operator;
     }
 }

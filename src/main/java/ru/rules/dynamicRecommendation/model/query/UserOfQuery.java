@@ -56,8 +56,9 @@ public class UserOfQuery extends Query {
      * <p>
      * The evaluation logic:
      * 1. Extracts the product type from the first argument ({@code arguments.get(0)}).
-     * 2. Uses {@link KnowledgeRepository} to count the user's transactions for that product type.
-     * 3. Checks if the count is at least 1 (user has interacted with the product).
+     * 2. Uses {@link KnowledgeRepository} to check if the user has transactions for that product type
+     *    via the {@code isUserOf} method.
+     * 3. The check returns {@code true} if the user has at least one transaction for the product.
      * 4. Applies negation if the {@code negate} flag is set.
      *
      * @param userId the ID of the user to evaluate; must not be null
@@ -80,13 +81,13 @@ public class UserOfQuery extends Query {
      * @throws IllegalArgumentException if:
      *   - {@code userId} is null
      *   - {@code arguments} list is empty
-     *   - the product type argument is invalid (null, empty, or cannot be parsed to a valid ProductType)
-     * @throws RuntimeException if database access fails during transaction counting
+     *   - the product type argument is invalid (null, empty, or cannot be parsed to a valid {@link ProductType})
+     * @throws RuntimeException if database access fails during the transaction check
      *        (e.g., connection issues, query execution errors, or data retrieval problems)
      */
     @Override
     public boolean evaluate(Long userId) {
-        boolean result = knowledgeRepository.isUserOf(userId, arguments.get(0));
+        boolean result = knowledgeRepository.isUserOf(userId, ProductType.fromType(arguments.get(0)));
         return negate != result;
     }
 }

@@ -105,22 +105,6 @@ public class RuleEvaluatorService {
      *                 </ul>
      * @return {@code true} if the condition is met according to the query logic and negation flag;
      * {@code false} otherwise
-     * @throws IllegalArgumentException      if:
-     *                                       <ul>
-     *                                         <li>{@code userId} is null</li>
-     *                                         <li>user with the specified {@code userId} does not exist</li>
-     *                                         <li>the number of arguments in {@code queryDTO} doesn't match the expected count for the query type</li>
-     *                                         <li>an argument cannot be parsed (e.g., invalid number format or enum value)</li>
-     *                                       </ul>
-     * @throws UnsupportedOperationException if an unknown query type is provided in {@code queryDTO.getQuery()}</li>
-     * @throws NullPointerException          if either {@code userId} or {@code queryDTO} is null
-     * @see QueryType
-     * @see QueryFactory#createQuery(QueryDTO, KnowledgeRepository)
-     * @see UserService#findById(Long)
-     * @see KnowledgeRepository#isUserOf(Long, String)
-     * @see KnowledgeRepository#isActiveUserOf(Long, String)
-     * @see KnowledgeRepository#compareTransactionSum(Long, String, String, String, int)
-     * @see KnowledgeRepository#compareDepositWithdraw(Long, String, String)
      */
     private boolean evaluateCondition(Long userId, QueryDTO queryDTO) {
 

@@ -15,31 +15,34 @@ import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 public class QueryFactory {
 
     /**
-     * Creates a query instance of the appropriate type based on the provided QueryDTO and repository.
+     * Creates a {@code Query} instance of the appropriate type based on the provided {@code QueryDTO} and repository.
      * Delegates to concrete query constructors, passing the DTO and knowledge repository for business logic.
      *
-     * @param queryDTO data transfer object containing query configuration; must not be null.
-     *               The DTO should provide:
-     *               <ul>
-     *               <li>{@code query} — query type identifier (e.g., "USER_OF", "ACTIVE_USER_OF")
-     *                   that determines the concrete query implementation</li>
-     *               <li>{@code arguments} — list of string parameters required for query execution</li>
-     *               <li>{@code negate} — flag indicating whether to negate the query result</li>
-     *               </ul>
-     * @param knowledgeRepository repository providing business logic for various query evaluations;
-     *                        must not be null. This repository will be passed to the created query instance
-     *                        for use in its {@code evaluate} method.
-     * @return a {@code Query} instance of the corresponding type (e.g., {@code UserOfQuery},
-     *         {@code ActiveUserOfQuery}), configured with the provided parameters and repository.
-     *         The returned query is ready for evaluation via {@link Query#evaluate}.
-     * @throws IllegalArgumentException if:
-     *        <ul>
-     *        <li>{@code queryDTO} is null</li>
-     *        <li>the query type extracted from {@code queryDTO.getQuery()} is invalid or cannot be converted
-     *            to a {@link QueryType} enum value</li>
-     *        <li>the specified {@code queryType} is not supported (no matching case in the switch statement)</li>
-     *        </ul>
-     * @throws NullPointerException if {@code knowledgeRepository} is null
+     * @param queryDTO            the data transfer object containing the query configuration; must not be {@code null}.
+     *                            The DTO must include:
+     *                            <ul>
+     *                              <li>{@code query} — a query type identifier (e.g., {@code "USER_OF"}, {@code "ACTIVE_USER_OF"})
+     *                                  that determines the concrete query implementation. This value will be parsed into a
+     *                                  {@link QueryType} enum.</li>
+     *                              <li>{@code arguments} — a list of string parameters required for query execution.
+     *                                  The required number and format of arguments depend on the specific {@code queryType}.</li>
+     *                              <li>{@code negate} — a boolean flag indicating whether to negate the evaluation result of the query.</li>
+     *                            </ul>
+     * @param knowledgeRepository the repository providing business logic for various query evaluations;
+     *                            must not be {@code null}. This repository is passed to the created query instance
+     *                            and is used in its {@link Query#evaluate} method.
+     * @return a fully configured {@code Query} instance of the corresponding type (e.g., {@code UserOfQuery},
+     * {@code ActiveUserOfQuery}, {@code TransactionSumCompareQuery}).
+     * The returned query is ready to be evaluated via the {@link Query#evaluate} method.
+     * @throws IllegalArgumentException if any of the following conditions are met:
+     *                                  <ul>
+     *                                    <li>{@code queryDTO} is {@code null}</li>
+     *                                    <li>the query type from {@code queryDTO.getQuery()} is invalid and cannot be converted
+     *                                        to a {@link QueryType} enum value (e.g., due to an unrecognized string)</li>
+     *                                    <li>the parsed {@code queryType} is not supported by this factory method
+     *                                        (i.e., no matching case in the switch statement, resulting in the {@code default} branch)</li>
+     *                                  </ul>
+     * @throws NullPointerException     if {@code knowledgeRepository} is {@code null}
      */
     public static Query createQuery(QueryDTO queryDTO, KnowledgeRepository knowledgeRepository) {
         QueryType queryType = QueryType.valueOf(queryDTO.getQuery());
