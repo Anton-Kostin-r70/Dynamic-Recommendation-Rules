@@ -10,7 +10,6 @@ import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.model.query.Query;
 import ru.rules.dynamicRecommendation.model.query.QueryFactory;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +23,6 @@ public class RuleEvaluatorService {
     private final KnowledgeRepository knowledgeRepository;
     private final RuleService ruleService;
     private final UserService usersService;
-    private final TransactionRepository transactionRepository;
 
     /**
      * Evaluates whether a recommendation rule applies to a specific user by checking all its conditions.
@@ -107,22 +105,6 @@ public class RuleEvaluatorService {
      *                 </ul>
      * @return {@code true} if the condition is met according to the query logic and negation flag;
      * {@code false} otherwise
-     * @throws IllegalArgumentException      if:
-     *                                       <ul>
-     *                                         <li>{@code userId} is null</li>
-     *                                         <li>user with the specified {@code userId} does not exist</li>
-     *                                         <li>the number of arguments in {@code queryDTO} doesn't match the expected count for the query type</li>
-     *                                         <li>an argument cannot be parsed (e.g., invalid number format or enum value)</li>
-     *                                       </ul>
-     * @throws UnsupportedOperationException if an unknown query type is provided in {@code queryDTO.getQuery()}</li>
-     * @throws NullPointerException          if either {@code userId} or {@code queryDTO} is null
-     * @see QueryType
-     * @see QueryFactory#createQuery(QueryDTO, KnowledgeRepository)
-     * @see UserService#findById(Long)
-     * @see KnowledgeRepository#isUserOf(Long, String)
-     * @see KnowledgeRepository#isActiveUserOf(Long, String)
-     * @see KnowledgeRepository#compareTransactionSum(Long, String, String, String, int)
-     * @see KnowledgeRepository#compareDepositWithdraw(Long, String, String)
      */
     private boolean evaluateCondition(Long userId, QueryDTO queryDTO) {
 
@@ -131,7 +113,7 @@ public class RuleEvaluatorService {
         if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("User not found: " + userId);
         }
-        return query.evaluate(userId, transactionRepository);
+        return query.evaluate(userId);
     }
 
     /**
@@ -142,10 +124,8 @@ public class RuleEvaluatorService {
      * @return a list of {@link RuleDTO} objects representing applicable recommendation rules
      */
     public List<RuleDTO> getRecommendations(@PathVariable Long userId) {
-        List<RuleDTO> allRules = ruleService.getAllRules();
-        List<RuleDTO> relevantRules = allRules.stream()
+        return ruleService.getAllRules().stream()
                 .filter(dto -> evaluate(dto, userId))
                 .collect(Collectors.toList());
-        return relevantRules;
     }
 }

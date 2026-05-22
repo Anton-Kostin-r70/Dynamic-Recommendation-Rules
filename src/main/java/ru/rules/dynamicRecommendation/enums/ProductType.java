@@ -17,7 +17,7 @@ public enum ProductType {
      *   <li>Prepaid card</li>
      * </ul>
      */
-    DEBIT,
+    DEBIT("DEBIT"),
     /**
      * Represents a credit product.
      * Indicates a financial product where the user borrows funds from the financial institution,
@@ -31,7 +31,7 @@ public enum ProductType {
      *   <li>Overdraft facility</li>
      * </ul>
      */
-    CREDIT,
+    CREDIT("CREDIT"),
     /**
      * Represents an investment product.
      * Indicates a product designed to help users grow their capital by investing in various assets.
@@ -45,7 +45,7 @@ public enum ProductType {
      *   <li>Stocks and bonds</li>
      * </ul>
      */
-    INVEST,
+    INVEST("INVEST"),
     /**
      * Represents a savings product.
      * Indicates a product intended for securely storing funds and earning interest over time.
@@ -58,5 +58,41 @@ public enum ProductType {
      *   <li>High‑yield savings account</li>
      * </ul>
      */
-    SAVING
+    SAVING("SAVING");
+
+    private final String type;
+
+    ProductType(String type) {
+        this.type = type;
+    }
+
+    /**
+     * Returns the string representation of this product type.
+     *
+     * @return the type as a string (e.g., "DEBIT", "CREDIT", etc.)
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * Finds a ProductType by its string representation.
+     *
+     * @param type the string representation to search for
+     * @return the corresponding ProductType enum constant
+     * @throws IllegalArgumentException if no ProductType found for the given type
+     */
+    public static ProductType fromType(String type) {
+        for (ProductType productType : values()) {
+            if (productType.getType().equalsIgnoreCase(type)) {
+                return productType;
+            }
+        }
+        throw new IllegalArgumentException("No ProductType found for type: " + type);
+    }
+
+    @Override
+    public String toString() {
+        return type;
+    }
 }

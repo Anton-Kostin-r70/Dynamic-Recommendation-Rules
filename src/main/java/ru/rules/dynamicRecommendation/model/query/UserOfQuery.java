@@ -4,7 +4,6 @@ package ru.rules.dynamicRecommendation.model.query;
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.*;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import static ru.rules.dynamicRecommendation.enums.QueryType.USER_OF;
 
@@ -53,28 +52,42 @@ public class UserOfQuery extends Query {
     }
 
     /**
-     * Evaluates whether the specified userId has any transactions for the given product type.
+     * Evaluates whether the specified user has any transactions for the given product type.
      * <p>
      * The evaluation logic:
-     * 1. Extracts the product type from the first argument.
-     * 2. Uses the transaction repository to count userId's transactions for that product type.
-     * 3. Checks if the count is at least 1 (userId has interacted with the product).
-     * 4. Applies negation if the negate flag is set.
+     * 1. Extracts the product type from the first argument ({@code arguments.get(0)}).
+     * 2. Uses {@link KnowledgeRepository} to check if the user has transactions for that product type
+     *    via the {@code isUserOf} method.
+     * 3. The check returns {@code true} if the user has at least one transaction for the product.
+     * 4. Applies negation if the {@code negate} flag is set.
      *
-     * @param userId                  the userId to evaluate; must not be null
-     * @param transactionRepository repository for accessing transaction data; must not be null
+     * @param userId the ID of the user to evaluate; must not be null
      * @return boolean result of the evaluation:
-     * - true: condition is met (userId has transactions, or has none if negated)
-     * - false: condition is not met (userId has no transactions, or has them if negated)
+     * <ul>
+     * <li><b>true</b>: condition is met
+     *   <ul>
+     *   <li>user has at least one transaction for the product type when {@code negate = false}</li>
+     *   <li>user has no transactions for the product type when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * <li><b>false</b>: condition is not met
+     *   <ul>
+     *   <li>user has no transactions for the product type when {@code negate = false}</li>
+     *   <li>user has at least one transaction for the product type when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     *
      * @throws IllegalArgumentException if:
-     *                                  - client is null
-     *                                  - transactionRepository is null
-     *                                  - arguments list is empty
-     *                                  - the product type argument is invalid (cannot be parsed to ProductType)
+     *   - {@code userId} is null
+     *   - {@code arguments} list is empty
+     *   - the product type argument is invalid (null, empty, or cannot be parsed to a valid {@link ProductType})
+     * @throws RuntimeException if database access fails during the transaction check
+     *        (e.g., connection issues, query execution errors, or data retrieval problems)
      */
     @Override
-    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
-        boolean result = knowledgeRepository.isUserOf(userId, arguments.get(0));
-        return negate ? !result : result;
+    public boolean evaluate(Long userId) {
+        boolean result = knowledgeRepository.isUserOf(userId, ProductType.fromType(arguments.get(0)));
+        return negate != result;
     }
 }
