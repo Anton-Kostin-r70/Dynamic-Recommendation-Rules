@@ -3,7 +3,6 @@ package ru.rules.dynamicRecommendation.model.query;
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
-import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
@@ -62,7 +61,7 @@ public class TransactionSumCompareDepositWithdrawQuery extends Query {
     }
 
     /**
-     * Evaluates the condition by comparing deposit and withdrawal transaction sums for a user's product.
+     * Evaluates the condition by comparing deposit and withdrawal transaction sums for a userId's product.
      * <p>
      * The evaluation logic:
      * 1. Extracts product type and comparison operator from arguments.
@@ -70,25 +69,25 @@ public class TransactionSumCompareDepositWithdrawQuery extends Query {
      * 3. Compares the sums using the specified operator.
      * 4. Applies negation if the negate flag is set.
      *
-     * @param user                  the user to evaluate; must not be null
+     * @param userId                  the userId to evaluate; must not be null
      * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the evaluation:
      * - true: condition is met (comparison passes, or fails if negated)
      * - false: condition is not met (comparison fails, or passes if negated)
      * @throws IllegalArgumentException if:
-     *                                  - user is null
+     *                                  - userId is null
      *                                  - transactionRepository is null
      *                                  - arguments list doesn't contain exactly 2 elements
      *                                  - product type or operator argument is invalid
      * @throws RuntimeException         if database access fails during sum calculations
      */
     @Override
-    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
+    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
         String depositProductType = arguments.get(0);
         String withdrawProductType = arguments.get(1);
 
         boolean result = knowledgeRepository.compareDepositWithdraw(
-                user.getId(), depositProductType, withdrawProductType
+                userId, depositProductType, withdrawProductType
         );
         return negate ? !result : result;
     }

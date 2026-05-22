@@ -3,7 +3,6 @@ package ru.rules.dynamicRecommendation.model.query;
 
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.*;
-import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
 import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
@@ -54,19 +53,19 @@ public class UserOfQuery extends Query {
     }
 
     /**
-     * Evaluates whether the specified user has any transactions for the given product type.
+     * Evaluates whether the specified userId has any transactions for the given product type.
      * <p>
      * The evaluation logic:
      * 1. Extracts the product type from the first argument.
-     * 2. Uses the transaction repository to count user's transactions for that product type.
-     * 3. Checks if the count is at least 1 (user has interacted with the product).
+     * 2. Uses the transaction repository to count userId's transactions for that product type.
+     * 3. Checks if the count is at least 1 (userId has interacted with the product).
      * 4. Applies negation if the negate flag is set.
      *
-     * @param user                  the user to evaluate; must not be null
+     * @param userId                  the userId to evaluate; must not be null
      * @param transactionRepository repository for accessing transaction data; must not be null
      * @return boolean result of the evaluation:
-     * - true: condition is met (user has transactions, or has none if negated)
-     * - false: condition is not met (user has no transactions, or has them if negated)
+     * - true: condition is met (userId has transactions, or has none if negated)
+     * - false: condition is not met (userId has no transactions, or has them if negated)
      * @throws IllegalArgumentException if:
      *                                  - client is null
      *                                  - transactionRepository is null
@@ -74,8 +73,8 @@ public class UserOfQuery extends Query {
      *                                  - the product type argument is invalid (cannot be parsed to ProductType)
      */
     @Override
-    public boolean evaluate(Users user, TransactionRepository transactionRepository) {
-        boolean result = knowledgeRepository.isUserOf(user.getId(), arguments.get(0));
+    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
+        boolean result = knowledgeRepository.isUserOf(userId, arguments.get(0));
         return negate ? !result : result;
     }
 }
