@@ -3,7 +3,6 @@ package ru.rules.dynamicRecommendation.model.query;
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import static ru.rules.dynamicRecommendation.enums.QueryType.ACTIVE_USER_OF;
 
@@ -68,15 +67,13 @@ public class ActiveUserOfQuery extends Query {
      * The evaluation follows this logic:
      * <ol>
      *   <li>Extracts the product type from the first argument ({@code arguments.get(0)}).</li>
-     *   <li>Uses {@link KnowledgeRepository} to count user's transactions for that product type.</li>
+     *   <li>Uses {@link KnowledgeRepository} to count the user's transactions for that product type.</li>
      *   <li>Checks if the count is at least 5 (activity threshold).</li>
      *   <li>Applies negation if the {@code negate} flag is set.</li>
      * </ol>
      *
-     * @param userId                  the user to evaluate; must not be null. The user's ID is used for transaction lookup.
-     * @param transactionRepository repository for accessing transaction data; must not be null.
-     *                              Note: This parameter is currently not used directly by this query —
-     *                              the logic is delegated to {@link KnowledgeRepository}.
+     * @param userId the ID of the user to evaluate; must not be null. Used for transaction lookup in {@link KnowledgeRepository}.
+     *
      * @return boolean result of the evaluation:
      * <ul>
      * <li><b>true</b>: condition is met
@@ -87,16 +84,19 @@ public class ActiveUserOfQuery extends Query {
      * </li>
      * <li><b>false</b>: condition is not met
      *     <ul>
-     *     <li>user is not active when {@code negate = false}</li>
-     *     <li>user is active when {@code negate = true}</li>
+     *     <li>user is not active (<5 transactions) when {@code negate = false}</li>
+     *     <li>user is active (≥5 transactions) when {@code negate = true}</li>
      *     </ul>
      * </li>
      * </ul>
-     * @throws IllegalArgumentException if {@code user} is null or if arguments are invalid
-     * @throws RuntimeException         if database access fails in {@link KnowledgeRepository}
+     *
+     * @throws IllegalArgumentException if {@code userId} is null or if arguments are invalid
+     *        (e.g., {@code arguments} is empty or the product type is not specified)
+     * @throws RuntimeException if database access fails in {@link KnowledgeRepository}
+     *        (e.g., connection issues or query execution errors)
      */
     @Override
-    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
+    public boolean evaluate(Long userId) {
         boolean result = knowledgeRepository.isActiveUserOf(userId, arguments.get(0));
         return negate != result;
     }

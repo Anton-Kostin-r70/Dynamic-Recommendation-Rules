@@ -6,7 +6,6 @@ import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.enums.TransactionType;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import static ru.rules.dynamicRecommendation.enums.QueryType.TRANSACTION_SUM_COMPARE;
 
@@ -64,26 +63,50 @@ public class TransactionSumCompareQuery extends Query {
     }
 
     /**
-     * Evaluates the condition by comparing a userId's transaction sum against a constant threshold.
+     * Evaluates the condition by comparing a user's transaction sum against a constant threshold.
+     * <p>
      * The evaluation logic:
-     * 1. Extracts product type, transaction type, operator, and constant from arguments.
+     * 1. Extracts parameters from arguments:
+     *    - {@code arguments.get(0)} — product type
+     *    - {@code arguments.get(1)} — transaction type
+     *    - {@code arguments.get(2)} — comparison operator
+     *    - {@code arguments.get(3)} — threshold constant (as string, parsed to integer)
      * 2. Retrieves the total transaction sum for the specified product and transaction types.
-     * 3. Compares the sum against the constant using the specified operator.
-     * 4. Applies negation if the negate flag is set.
+     * 3. Compares the sum against the threshold using the specified operator.
+     * 4. Applies negation if the {@code negate} flag is set.
      *
-     * @param userId                  the userId to evaluate; must not be null
-     * @param transactionRepository repository for accessing transaction data; must not be null
+     * @param userId the ID of the user to evaluate; must not be null
      * @return boolean result of the evaluation:
-     * - true: condition is met (comparison passes, or fails if negated)
-     * - false: condition is not met (comparison fails, or passes if negated)
+     * <ul>
+     * <li><b>true</b>: condition is met
+     *   <ul>
+     *   <li>transaction sum meets the comparison criteria when {@code negate = false}</li>
+     *   <li>transaction sum does NOT meet the criteria when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * <li><b>false</b>: condition is not met
+     *   <ul>
+     *   <li>transaction sum does NOT meet the criteria when {@code negate = false}</li>
+     *   <li>transaction sum meets the criteria when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     *
      * @throws IllegalArgumentException if:
-     *                                  - userId is null
-     *                                  - transactionRepository is null
-     *                                  - arguments list doesn't contain exactly 4 elements
-     *                                  - any argument is invalid (unparsable product type, transaction type, operator, or constant)
+     *   - {@code userId} is null
+     *   - {@code arguments} list doesn't contain exactly 4 elements
+     *   - any argument is invalid:
+     *     <ul>
+     *     <li>product type is null or empty</li>
+     *     <li>transaction type is null or empty</li>
+     *     <li>operator is unsupported (not one of: "==", "!=", ">", ">=", "<", "<=")</li>
+     *     <li>threshold constant is not a valid integer string (e.g., "abc", null, or empty)</li>
+     *     </ul>
+     * @throws RuntimeException if database access fails during sum calculation
+     *        (e.g., connection issues, query execution errors, or data retrieval problems)
      */
     @Override
-    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
+    public boolean evaluate(Long userId) {
         String productType = arguments.get(0);
         String transactionType = arguments.get(1);
         String operator = arguments.get(2);
@@ -92,6 +115,6 @@ public class TransactionSumCompareQuery extends Query {
         boolean result = knowledgeRepository.compareTransactionSum(
                 userId, productType, transactionType, operator, threshold
         );
-        return negate ? !result : result;
+        return negate != result;
     }
 }

@@ -2,7 +2,6 @@ package ru.rules.dynamicRecommendation.model.query;
 
 import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.QueryType;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
 
@@ -86,18 +85,23 @@ public abstract class Query {
      * Evaluates the query condition for a specific user using transaction data.
      * The actual evaluation logic is implemented by concrete subclasses.
      *
-     * @param userId                  the user for whom the recommendation is being evaluated; must not be null
-     * @param transactionRepository repository for accessing transaction data; must not be null
+     * @param userId the ID of the user for whom the condition is being evaluated; must not be null
      * @return boolean result of the condition check:
      * <ul>
-     * <li><b>true</b>: condition is met (or not met if {@code negate} is {@code true})</li>
-     * <li><b>false</b>: condition is not met (or met if {@code negate} is {@code true} and applied)</li>
+     * <li><b>true</b>: condition is met</li>
+     * <li><b>false</b>: condition is not met</li>
      * </ul>
-     * @throws IllegalArgumentException if {@code user} or {@code transactionRepository} is null
-     * @throws RuntimeException         if evaluation fails due to data issues or internal errors
+     * The final result is affected by the {@code negate} flag (if applicable):
+     * <ul>
+     * <li>When {@code negate = false}: returns the raw evaluation result</li>
+     * <li>When {@code negate = true}: returns the logical negation of the evaluation result</li>
+     * </ul>
+     *
+     * @throws IllegalArgumentException if {@code userId} is null
+     * @throws RuntimeException if evaluation fails due to data issues, repository errors,
+     *         or internal processing problems
      */
-    public abstract boolean evaluate(Long userId, TransactionRepository transactionRepository);
-
+    public abstract boolean evaluate(Long userId);
     /**
      * Validates that the number of provided arguments matches the expected count for the query type.
      * Performed during query initialization to ensure correct configuration before evaluation.

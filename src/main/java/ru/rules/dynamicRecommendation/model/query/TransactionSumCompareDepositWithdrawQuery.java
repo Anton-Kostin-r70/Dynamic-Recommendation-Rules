@@ -4,7 +4,6 @@ import ru.rules.dynamicRecommendation.dto.QueryDTO;
 import ru.rules.dynamicRecommendation.enums.ComparisonOperatorType;
 import ru.rules.dynamicRecommendation.enums.ProductType;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import static ru.rules.dynamicRecommendation.enums.QueryType.TRANSACTION_SUM_COMPARE_DEPOSIT_WITHDRAW;
 
@@ -61,34 +60,48 @@ public class TransactionSumCompareDepositWithdrawQuery extends Query {
     }
 
     /**
-     * Evaluates the condition by comparing deposit and withdrawal transaction sums for a userId's product.
+     * Evaluates the condition by comparing deposit and withdrawal transaction sums for a user's products.
      * <p>
      * The evaluation logic:
-     * 1. Extracts product type and comparison operator from arguments.
-     * 2. Retrieves total deposit and withdrawal amounts for the product type.
-     * 3. Compares the sums using the specified operator.
-     * 4. Applies negation if the negate flag is set.
+     * 1. Extracts product types for deposits and withdrawals from arguments:
+     *    - {@code arguments.get(0)} — product type for deposits
+     *    - {@code arguments.get(1)} — product type for withdrawals
+     * 2. Retrieves total deposit and withdrawal amounts for the specified product types.
+     * 3. Compares the sums (deposit vs withdrawal) using internal comparison logic.
+     * 4. Applies negation if the {@code negate} flag is set.
      *
-     * @param userId                  the userId to evaluate; must not be null
-     * @param transactionRepository repository for accessing transaction data; must not be null
+     * @param userId the ID of the user to evaluate; must not be null
      * @return boolean result of the evaluation:
-     * - true: condition is met (comparison passes, or fails if negated)
-     * - false: condition is not met (comparison fails, or passes if negated)
+     * <ul>
+     * <li><b>true</b>: condition is met
+     *   <ul>
+     *   <li>deposit and withdrawal sums meet the comparison criteria when {@code negate = false}</li>
+     *   <li>deposit and withdrawal sums do NOT meet the criteria when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * <li><b>false</b>: condition is not met
+     *   <ul>
+     *   <li>deposit and withdrawal sums do NOT meet the criteria when {@code negate = false}</li>
+     *   <li>deposit and withdrawal sums meet the criteria when {@code negate = true}</li>
+     *   </ul>
+     * </li>
+     * </ul>
+     *
      * @throws IllegalArgumentException if:
-     *                                  - userId is null
-     *                                  - transactionRepository is null
-     *                                  - arguments list doesn't contain exactly 2 elements
-     *                                  - product type or operator argument is invalid
-     * @throws RuntimeException         if database access fails during sum calculations
+     *   - {@code userId} is null
+     *   - {@code arguments} list doesn't contain exactly 2 elements
+     *   - product type arguments are invalid (null, empty, or unsupported values)
+     * @throws RuntimeException if database access fails during sum calculations
+     *        (e.g., connection issues, query execution errors, or data retrieval problems)
      */
     @Override
-    public boolean evaluate(Long userId, TransactionRepository transactionRepository) {
+    public boolean evaluate(Long userId) {
         String depositProductType = arguments.get(0);
         String withdrawProductType = arguments.get(1);
 
         boolean result = knowledgeRepository.compareDepositWithdraw(
                 userId, depositProductType, withdrawProductType
         );
-        return negate ? !result : result;
+        return negate != result;
     }
 }

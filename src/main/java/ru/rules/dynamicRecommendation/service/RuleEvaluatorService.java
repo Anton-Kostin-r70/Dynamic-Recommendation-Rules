@@ -10,7 +10,6 @@ import ru.rules.dynamicRecommendation.model.Users;
 import ru.rules.dynamicRecommendation.model.query.Query;
 import ru.rules.dynamicRecommendation.model.query.QueryFactory;
 import ru.rules.dynamicRecommendation.repository.KnowledgeRepository;
-import ru.rules.dynamicRecommendation.repository.TransactionRepository;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,7 +23,6 @@ public class RuleEvaluatorService {
     private final KnowledgeRepository knowledgeRepository;
     private final RuleService ruleService;
     private final UserService usersService;
-    private final TransactionRepository transactionRepository;
 
     /**
      * Evaluates whether a recommendation rule applies to a specific user by checking all its conditions.
@@ -131,7 +129,7 @@ public class RuleEvaluatorService {
         if (userOptional.isEmpty()) {
             throw new IllegalArgumentException("User not found: " + userId);
         }
-        return query.evaluate(userId, transactionRepository);
+        return query.evaluate(userId);
     }
 
     /**
