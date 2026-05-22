@@ -140,10 +140,8 @@ public class RuleEvaluatorService {
      * @return a list of {@link RuleDTO} objects representing applicable recommendation rules
      */
     public List<RuleDTO> getRecommendations(@PathVariable Long userId) {
-        List<RuleDTO> allRules = ruleService.getAllRules();
-        List<RuleDTO> relevantRules = allRules.stream()
+        return ruleService.getAllRules().stream()
                 .filter(dto -> evaluate(dto, userId))
                 .collect(Collectors.toList());
-        return relevantRules;
     }
 }

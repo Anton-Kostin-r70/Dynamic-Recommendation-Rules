@@ -68,9 +68,6 @@ public abstract class Query {
             throw new IllegalArgumentException("Query DTO cannot be null");
         }
         QueryType queryType = QueryType.valueOf(queryDTO.getQuery());
-        if (queryType == null) {
-            throw new IllegalArgumentException("Query type cannot be null");
-        }
         List<String> arguments = queryDTO.getArguments();
         if (arguments == null) {
             throw new IllegalArgumentException("Arguments list cannot be null");
